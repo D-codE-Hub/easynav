@@ -1,6 +1,21 @@
 // Copyright (c) 2026, D-codE and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on("EasyNav Settings", {
-	refresh(frm) {},
+const EASYNAV_TARGET_HINTS = {
+	DocType: __("DocType name, e.g. Customer"),
+	Page: __("Page name, e.g. sales-dashboard"),
+	Report: __("Report name, e.g. Sales Analytics"),
+	URL: __("https://example.com or /app/..."),
+};
+
+frappe.ui.form.on("EasyNav Item", {
+	type(frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		const grid_row = frm.fields_dict.items.grid.get_row(cdn);
+		const target = grid_row && grid_row.grid_form && grid_row.grid_form.fields_dict.target;
+		if (target) {
+			target.df.description = EASYNAV_TARGET_HINTS[row.type] || "";
+			target.refresh();
+		}
+	},
 });

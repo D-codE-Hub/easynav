@@ -1,7 +1,11 @@
 # Copyright (c) 2026, D-codE and contributors
 # For license information, please see license.txt
 
+import frappe
+from frappe import _
 from frappe.model.document import Document
+
+from easynav.easynav.validation import get_item_error
 
 
 class EasyNavSettings(Document):
@@ -22,4 +26,10 @@ class EasyNavSettings(Document):
 		position: DF.Literal["Bottom Right", "Bottom Left", "Top Right", "Top Left"]
 	# end: auto-generated types
 
-	pass
+	def validate(self):
+		for item in self.items:
+			if error := get_item_error(item):
+				frappe.throw(_("Row #{0}: {1}").format(item.idx, error), title=_("Invalid Navigation Item"))
+
+	def on_update(self):
+		frappe.clear_cache()
