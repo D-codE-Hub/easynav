@@ -30,7 +30,7 @@ class TestEasyNavSecurity(IntegrationTestCase):
 		super().setUpClass()
 		frappe.set_user("Administrator")
 		cls.limited = _make_user("easynav-limited@example.com", [])  # User C
-		cls.blogger = _make_user("easynav-blogger@example.com", ["Blogger"])  # User A
+		cls.scripter = _make_user("easynav-scripter@example.com", ["Script Manager"])  # User A
 		cls.manager = _make_user("easynav-manager@example.com", ["System Manager"])  # User B
 
 		if not frappe.db.exists("Report", "EasyNav Test Report"):
@@ -52,7 +52,7 @@ class TestEasyNavSecurity(IntegrationTestCase):
 		settings.items = []
 		for label, type_, target in (
 			("Settings", "DocType", "System Settings"),
-			("Blog Post", "DocType", "Blog Post"),
+			("Server Script", "DocType", "Server Script"),
 			("Report", "Report", "EasyNav Test Report"),
 			("Site", "URL", "https://example.com"),
 		):
@@ -69,17 +69,17 @@ class TestEasyNavSecurity(IntegrationTestCase):
 		labels = self._labels(self.limited)
 		self.assertNotIn("Settings", labels)
 		self.assertNotIn("Report", labels)
-		self.assertNotIn("Blog Post", labels)
+		self.assertNotIn("Server Script", labels)
 		self.assertIn("Site", labels)  # URLs are not permission controlled
 
-	def test_blogger_sees_blog_post_only(self):
-		labels = self._labels(self.blogger)
-		self.assertIn("Blog Post", labels)
+	def test_script_manager_sees_server_script_only(self):
+		labels = self._labels(self.scripter)
+		self.assertIn("Server Script", labels)
 		self.assertNotIn("Settings", labels)
 		self.assertNotIn("Report", labels)
 
 	def test_system_manager_sees_only_what_frappe_allows(self):
-		# System Manager has no Blog Post permission, so EasyNav must hide it too
+		# System Manager has no Server Script permission, so EasyNav must hide it too
 		self.assertEqual(self._labels(self.manager), ["Settings", "Report", "Site"])
 
 	def test_session_user_is_restored(self):
