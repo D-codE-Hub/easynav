@@ -38,9 +38,11 @@ def get_item_error(item) -> str | None:
 		return _("Target is required")
 
 	if item.type == "DocType":
-		if not frappe.db.exists("DocType", target):
+		try:
+			meta = frappe.get_meta(target)  # cached; no query on repeat calls
+		except frappe.DoesNotExistError:
 			return _("DocType {0} does not exist").format(frappe.bold(target))
-		if frappe.db.get_value("DocType", target, "istable"):
+		if meta.istable:
 			return _("{0} is a child table and cannot be opened directly").format(frappe.bold(target))
 	elif item.type == "Page":
 		if not frappe.db.exists("Page", target):

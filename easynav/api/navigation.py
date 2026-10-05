@@ -20,7 +20,7 @@ def _resolve_doctype(target: str) -> dict | None:
 	if not frappe.has_permission(target, "read"):
 		return None
 
-	if frappe.db.get_value("DocType", target, "issingle"):
+	if frappe.get_meta(target).issingle:
 		return {"route": ["Form", target], "path": f"/app/{_slug(target)}"}
 
 	return {"route": ["List", target], "path": f"/app/{_slug(target)}"}
