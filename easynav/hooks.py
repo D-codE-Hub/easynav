@@ -38,8 +38,11 @@ use_json_request_body = True
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/easynav/css/easynav.css"
-# app_include_js = "/assets/easynav/js/easynav.js"
+app_include_css = "/assets/easynav/css/easynav.css"
+app_include_js = "/assets/easynav/js/easynav.js"
+
+# put the navigation config into frappe.boot so the Desk needs no extra request
+extend_bootinfo = ["easynav.boot.extend_bootinfo"]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/easynav/css/easynav.css"
