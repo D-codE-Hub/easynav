@@ -249,7 +249,9 @@
 
 		// Fall back to the default icon when the configured name is not in Frappe's sprite.
 		get_icon_html(name, size = "md") {
-			const valid = name && /^[\w-]+$/.test(name) && document.getElementById(`icon-${name}`);
+			// The sprite may not be in the DOM yet at first render; only reject unknown names once it is.
+			const sprite_ready = !!document.getElementById(`icon-${DEFAULT_ICON}`);
+			const valid = name && /^[\w-]+$/.test(name) && (!sprite_ready || document.getElementById(`icon-${name}`));
 			return frappe.utils.icon(valid ? name : DEFAULT_ICON, size, "", "", "", true);
 		},
 	};
