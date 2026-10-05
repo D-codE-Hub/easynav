@@ -1,1 +1,79 @@
 /* EasyNav global styles. All selectors are prefixed with `easynav-`. */
+
+.easynav-root {
+	--easynav-offset: 24px;
+	--easynav-size: 48px;
+
+	position: fixed;
+	/* above page content and the navbar/dock (1020-1022), below Bootstrap modals (1040+) */
+	z-index: 1030;
+	width: var(--easynav-size);
+	height: var(--easynav-size);
+	pointer-events: none; /* only the button itself captures clicks */
+}
+
+.easynav-root--bottom-right {
+	right: var(--easynav-offset);
+	bottom: var(--easynav-offset);
+}
+
+.easynav-root--bottom-left {
+	left: var(--easynav-offset);
+	bottom: var(--easynav-offset);
+}
+
+.easynav-root--top-right {
+	right: var(--easynav-offset);
+	top: calc(var(--navbar-height, 48px) + var(--easynav-offset));
+}
+
+.easynav-root--top-left {
+	left: var(--easynav-offset);
+	top: calc(var(--navbar-height, 48px) + var(--easynav-offset));
+}
+
+.easynav-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--easynav-size);
+	height: var(--easynav-size);
+	padding: 0;
+	border: 1px solid var(--border-color);
+	border-radius: 50%;
+	background-color: var(--primary, var(--gray-900));
+	color: var(--neutral, #fff);
+	box-shadow: var(--shadow-md);
+	cursor: pointer;
+	pointer-events: auto;
+	transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.easynav-button:hover {
+	transform: scale(1.06);
+	box-shadow: var(--shadow-lg);
+}
+
+.easynav-button:focus-visible {
+	outline: 2px solid var(--primary);
+	outline-offset: 3px;
+}
+
+.easynav-button .icon {
+	width: 20px;
+	height: 20px;
+	stroke: currentColor;
+	pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.easynav-button {
+		transition: none;
+	}
+}
+
+@media print {
+	.easynav-root {
+		display: none;
+	}
+}
