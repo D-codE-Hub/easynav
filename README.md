@@ -22,7 +22,7 @@ bench --site <site-name> migrate
 bench restart
 ```
 
-After a code update, hard-reload the browser (Cmd/Ctrl+Shift+R): Desk caches `easynav.js` and `easynav.css`.
+EasyNav ships as content-hashed bundles (`easynav.bundle.js` / `easynav.bundle.css`), so browsers pick up new versions after `bench build` without a manual cache clear. In development you can still hard-reload (Cmd/Ctrl+Shift+R).
 
 ## Configuration
 
@@ -70,7 +70,7 @@ EasyNav Settings --> build_navigation(user) --> frappe.boot.easynav --> easynav.
 | Validation (shared by save and API) | `easynav/easynav/validation.py` |
 | API `easynav.api.navigation.get_navigation` | `easynav/api/navigation.py` |
 | Boot hook (`extend_bootinfo`) | `easynav/boot.py` |
-| Global assets (`app_include_js/css`) | `easynav/public/js/easynav.js`, `easynav/public/css/easynav.css` |
+| Global assets (`app_include_js/css`) | `easynav/public/js/easynav.bundle.js`, `easynav/public/scss/easynav.bundle.scss` |
 
 ### API
 
@@ -127,7 +127,7 @@ bench --site <site-name> run-tests --app easynav
 
 The suite (`IntegrationTestCase`) covers settings validation, the API (ordering, routes, filtering, invalid data) and permissions for restricted, sales and system-manager users.
 
-After changing JS/CSS run `bench build --app easynav` and hard-reload the browser.
+After changing JS/SCSS run `bench build --app easynav` and reload the browser.
 
 Specifications live in `easynav/specs/`.
 

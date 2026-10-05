@@ -1600,3 +1600,42 @@ The implementation should prioritize:
 7. Easy future extension
 
 The MVP should **not** try to become a complete navigation framework immediately. Build the global navigation foundation first, then expand it based on actual user requirements.
+
+---
+
+# Appendix A — Phase 17 Pre-Deployment Checklist (2026-10-05)
+
+Verified on the development bench (site `wahub.com`, Frappe 17.0.0-dev). **No production deployment was performed.**
+
+```text
+[x] App installs successfully                     (installed; list-apps shows easynav)
+[x] DocTypes migrate correctly                    (bench migrate clean)
+[x] Assets build successfully                     (bench build --app easynav)
+[x] JS has no console errors                      (no errors on /desk)
+[x] CSS has no conflicts                          (compiled by Sass; renders correctly)
+[x] API works                                     (get_navigation, 20 Python tests)
+[x] Navigation works                              (Phase 14 browser matrix)
+[x] Permissions work                              (Phase 10 tests)
+[x] External URL validation works                 (server + client)
+[x] SPA route changes work                        (Phase 14: 9 routes, single instance)
+[x] Production build tested                       (hashed bundles in assets.json)
+[ ] Linters (ruff / eslint / pre-commit)          NOT RUN: tools not installed on this bench
+[ ] Fresh install on a clean site                 NOT RUN
+[ ] Production server (nginx/supervisor) check    NOT RUN
+```
+
+## Change made in Phase 17: hashed bundles
+
+`app_include_js` / `app_include_css` now reference `easynav.bundle.js` / `easynav.bundle.css` (sources: `public/js/easynav.bundle.js`, `public/scss/easynav.bundle.scss`) instead of the raw `/assets/easynav/js/easynav.js` paths shown in Phase 5.
+
+Reason: raw `/assets/...` files have no content hash, so browsers and proxies keep serving an old copy after an update (this caused a stale-script problem in development). Frappe's builder emits `easynav.bundle.<hash>.js`, resolved through `assets.json`, which is how Frappe and ERPNext load their own assets. File names differ from the original naming section (`easynav.js` / `easynav.css`) for this reason.
+
+## Deployment commands
+
+```bash
+bench get-app <repository-url> --branch main
+bench --site <site-name> install-app easynav     # first time only
+bench build --app easynav
+bench --site <site-name> migrate
+bench restart                                    # or your process manager
+```
