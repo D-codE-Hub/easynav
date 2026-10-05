@@ -28,7 +28,7 @@ class TestEasyNavSecurity(IntegrationTestCase):
 		super().setUpClass()
 		frappe.set_user("Administrator")
 		cls.limited = _make_user("easynav-limited@example.com", [])  # User C
-		cls.sales = _make_user("easynav-sales@example.com", ["Sales User"])  # User A
+		cls.blogger = _make_user("easynav-blogger@example.com", ["Blogger"])  # User A
 		cls.manager = _make_user("easynav-manager@example.com", ["System Manager"])  # User B
 
 		if not frappe.db.exists("Report", "EasyNav Test Report"):
@@ -50,7 +50,7 @@ class TestEasyNavSecurity(IntegrationTestCase):
 		settings.items = []
 		for label, type_, target in (
 			("Settings", "DocType", "System Settings"),
-			("Customer", "DocType", "Customer"),
+			("Blog Post", "DocType", "Blog Post"),
 			("Report", "Report", "EasyNav Test Report"),
 			("Site", "URL", "https://example.com"),
 		):
@@ -67,17 +67,17 @@ class TestEasyNavSecurity(IntegrationTestCase):
 		labels = self._labels(self.limited)
 		self.assertNotIn("Settings", labels)
 		self.assertNotIn("Report", labels)
-		self.assertNotIn("Customer", labels)
+		self.assertNotIn("Blog Post", labels)
 		self.assertIn("Site", labels)  # URLs are not permission controlled
 
-	def test_sales_user_sees_customer_only(self):
-		labels = self._labels(self.sales)
-		self.assertIn("Customer", labels)
+	def test_blogger_sees_blog_post_only(self):
+		labels = self._labels(self.blogger)
+		self.assertIn("Blog Post", labels)
 		self.assertNotIn("Settings", labels)
 		self.assertNotIn("Report", labels)
 
 	def test_system_manager_sees_only_what_frappe_allows(self):
-		# System Manager has no Customer permission in ERPNext, so EasyNav must hide it too
+		# System Manager has no Blog Post permission, so EasyNav must hide it too
 		self.assertEqual(self._labels(self.manager), ["Settings", "Report", "Site"])
 
 	def test_session_user_is_restored(self):
