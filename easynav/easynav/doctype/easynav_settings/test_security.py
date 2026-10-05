@@ -15,6 +15,8 @@ def _make_user(email: str, roles: list[str]):
 		).insert(ignore_permissions=True)
 	user.roles = []
 	for role in roles:
+		if not frappe.db.exists("Role", role):
+			frappe.get_doc({"doctype": "Role", "role_name": role}).insert(ignore_permissions=True)
 		user.append("roles", {"role": role})
 	user.save(ignore_permissions=True)
 	return email
