@@ -30,6 +30,24 @@
 			this.render();
 		},
 
+		// Re-fetch the configuration from the server (e.g. after EasyNav Settings was saved).
+		// Not called on route changes: the boot payload is already current for the session.
+		refresh() {
+			return frappe
+				.call({ method: "easynav.api.navigation.get_navigation", type: "GET" })
+				.then((r) => {
+					this.config = r.message || null;
+					this.render();
+				});
+		},
+
+		// Route changes never rebuild the UI; this only repairs it if something removed it from the DOM.
+		ensure_mounted() {
+			if (this._mounted && this.config && this.config.enabled && !document.getElementById(ROOT_ID)) {
+				this.render();
+			}
+		},
+
 		render() {
 			// Always keep exactly one instance, even if init somehow runs twice.
 			$(`#${ROOT_ID}`).remove();
@@ -90,10 +108,73 @@
 			return $menu;
 		},
 
-		// Plain href so the browser handles middle-click / copy link. Routing proper is Phase 8.
+		// Real href keeps middle-click / copy-link working; plain clicks are routed in on_item_click.
 		get_href(item) {
 			const href = item.type === "URL" ? item.url : item.path;
-			return typeof href === "string" && /^(https?:\/\/|\/(?!\/))/.test(href) ? href : "#";
+			return this.is_safe_url(href) ? href : "#";
+		},
+
+		on_item_click(e) {
+			const item = $(e.currentTarget).data("easynav-item");
+			this.close();
+
+			// let the browser handle ctrl/cmd/shift-click and middle-click (native new tab/window)
+			if (!item || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button > 0) return;
+
+			e.preventDefault();
+			this.navigate(item);
+		},
+
+		// Explicit handling per type. Never assigns item.target to window.location directly.
+		navigate(item) {
+			switch (item.type) {
+				case "DocType":
+				case "Page":
+				case "Report":
+					return this.open_route(item);
+				case "URL":
+					return this.open_url(item);
+				default:
+					console.warn("EasyNav: unsupported item type", item.type);
+			}
+		},
+
+		// Routes are resolved and permission-checked by the server (easynav/api/navigation.py).
+		open_route(item) {
+			if (item.open_in_new_tab) {
+				if (this.is_safe_url(item.path)) this.open_new_tab(item.path);
+				return;
+			}
+			if (Array.isArray(item.route) && item.route.length) {
+				frappe.set_route(...item.route);
+			} else if (this.is_safe_url(item.path)) {
+				window.location.assign(item.path);
+			}
+		},
+
+		open_url(item) {
+			if (!this.is_safe_url(item.url)) {
+				frappe.show_alert({ message: __("EasyNav: blocked an unsafe link"), indicator: "red" });
+				return;
+			}
+			if (item.open_in_new_tab) this.open_new_tab(item.url);
+			else window.location.assign(item.url);
+		},
+
+		open_new_tab(url) {
+			window.open(url, "_blank", "noopener,noreferrer");
+		},
+
+		// Mirrors easynav/easynav/validation.py: http(s) URLs or same-origin paths only.
+		is_safe_url(url) {
+			if (typeof url !== "string" || !url.trim() || /[\\\s]/.test(url)) return false;
+			if (url.startsWith("/")) return !url.startsWith("//");
+			try {
+				const parsed = new URL(url);
+				return ["http:", "https:"].includes(parsed.protocol) && !!parsed.host;
+			} catch (e) {
+				return false;
+			}
 		},
 
 		bind_events($root, $button) {
@@ -111,7 +192,7 @@
 				});
 			}
 
-			$root.on("click", ".easynav-item", () => this.close());
+			$root.on("click", ".easynav-item", (e) => this.on_item_click(e));
 
 			$root.on("keydown", (e) => this.on_keydown(e));
 		},
@@ -167,5 +248,8 @@
 	$(document).on("click", (e) => {
 		if (easynav.is_open() && !easynav.root.contains(e.target)) easynav.close();
 	});
-	$(document).on("page-change", () => easynav.close());
+	$(document).on("page-change", () => {
+		easynav.close();
+		easynav.ensure_mounted();
+	});
 })();

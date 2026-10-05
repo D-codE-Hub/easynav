@@ -8,6 +8,13 @@ const EASYNAV_TARGET_HINTS = {
 	URL: __("https://example.com or /app/..."),
 };
 
+frappe.ui.form.on("EasyNav Settings", {
+	// apply changes immediately instead of waiting for a full reload
+	after_save() {
+		if (window.easynav) easynav.refresh();
+	},
+});
+
 frappe.ui.form.on("EasyNav Item", {
 	type(frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
