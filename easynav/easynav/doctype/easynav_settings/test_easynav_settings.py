@@ -39,7 +39,15 @@ class TestEasyNavSettings(IntegrationTestCase):
 	def test_url_safety(self):
 		for url in ("https://a.com/x", "http://a.com", "/app/user"):
 			self.assertTrue(is_safe_url(url), url)
-		for url in ("javascript:alert(1)", "data:text/html,x", "//evil.com", "ftp://a.com", "", "https://", "/\\evil.com"):
+		for url in (
+			"javascript:alert(1)",
+			"data:text/html,x",
+			"//evil.com",
+			"ftp://a.com",
+			"",
+			"https://",
+			"/\\evil.com",
+		):
 			self.assertFalse(is_safe_url(url), url)
 
 	def test_icon_and_order_validation(self):

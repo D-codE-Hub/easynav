@@ -5,7 +5,12 @@
 
 	const ROOT_ID = "easynav-root";
 	const DEFAULT_ICON = "menu";
-	const TYPE_ICONS = { DocType: "list", Page: "layout-dashboard", Report: "chart-bar", URL: "external-link" };
+	const TYPE_ICONS = {
+		DocType: "list",
+		Page: "layout-dashboard",
+		Report: "chart-bar",
+		URL: "external-link",
+	};
 	const HOVER_CLOSE_DELAY = 150;
 	const POSITIONS = ["bottom-right", "bottom-left", "top-right", "top-left"];
 
@@ -45,7 +50,12 @@
 
 		// Route changes never rebuild the UI; this only repairs it if something removed it from the DOM.
 		ensure_mounted() {
-			if (this._mounted && this.config && this.config.enabled && !document.getElementById(ROOT_ID)) {
+			if (
+				this._mounted &&
+				this.config &&
+				this.config.enabled &&
+				!document.getElementById(ROOT_ID)
+			) {
 				this.render();
 			}
 		},
@@ -58,7 +68,9 @@
 			const config = this.config;
 			if (!config || !config.enabled || !(config.items || []).length) return;
 
-			const position = POSITIONS.includes(config.position) ? config.position : "bottom-right";
+			const position = POSITIONS.includes(config.position)
+				? config.position
+				: "bottom-right";
 			const label = (config.button && config.button.label) || __("EasyNav");
 
 			const $root = $("<div>", {
@@ -158,7 +170,10 @@
 
 		open_url(item) {
 			if (!this.is_safe_url(item.url)) {
-				frappe.show_alert({ message: __("EasyNav: blocked an unsafe link"), indicator: "red" });
+				frappe.show_alert({
+					message: __("EasyNav: blocked an unsafe link"),
+					indicator: "red",
+				});
 				return;
 			}
 			if (item.open_in_new_tab) this.open_new_tab(item.url);
@@ -246,12 +261,14 @@
 			}
 		},
 
-
 		// Fall back to the default icon when the configured name is not in Frappe's sprite.
 		get_icon_html(name, size = "md") {
 			// The sprite may not be in the DOM yet at first render; only reject unknown names once it is.
 			const sprite_ready = !!document.getElementById(`icon-${DEFAULT_ICON}`);
-			const valid = name && /^[\w-]+$/.test(name) && (!sprite_ready || document.getElementById(`icon-${name}`));
+			const valid =
+				name &&
+				/^[\w-]+$/.test(name) &&
+				(!sprite_ready || document.getElementById(`icon-${name}`));
 			return frappe.utils.icon(valid ? name : DEFAULT_ICON, size, "", "", "", true);
 		},
 	};
