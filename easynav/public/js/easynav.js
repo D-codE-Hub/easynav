@@ -5,6 +5,7 @@
 
 	const ROOT_ID = "easynav-root";
 	const DEFAULT_ICON = "menu";
+	const TYPE_ICONS = { DocType: "list", Page: "layout-dashboard", Report: "chart-bar", URL: "external-link" };
 	const HOVER_CLOSE_DELAY = 150;
 	const POSITIONS = ["bottom-right", "bottom-left", "top-right", "top-left"];
 
@@ -15,6 +16,7 @@
 		button: null,
 		menu: null,
 		_hover_timer: null,
+		_pinned: false, // opened by click: stays open until outside click / Esc / second click
 
 		// Configuration is delivered in frappe.boot (see easynav/boot.py).
 		get_config() {
@@ -98,7 +100,9 @@
 					href: this.get_href(item),
 				});
 				$item.append(
-					$("<span>", { class: "easynav-item-icon" }).append(this.get_icon_html(item.icon, "sm")),
+					$("<span>", { class: "easynav-item-icon" }).append(
+						this.get_icon_html(item.icon || TYPE_ICONS[item.type], "sm")
+					),
 					$("<span>", { class: "easynav-item-label" }).text(item.label)
 				);
 				$item.data("easynav-item", item);
@@ -188,6 +192,7 @@
 				});
 				$root.on("mouseleave", () => {
 					clearTimeout(this._hover_timer);
+					if (this._pinned) return;
 					this._hover_timer = setTimeout(() => this.close(), HOVER_CLOSE_DELAY);
 				});
 			}
@@ -225,14 +230,22 @@
 		},
 
 		close() {
+			this._pinned = false;
 			if (!this.root || !this.is_open()) return;
 			this.root.classList.remove("easynav-root--open");
 			this.button.setAttribute("aria-expanded", "false");
 		},
 
+		// A click always pins the menu open (even if hover already opened it); a second click closes it.
 		toggle() {
-			this.is_open() ? this.close() : this.open();
+			if (this.is_open() && this._pinned) {
+				this.close();
+			} else {
+				this.open();
+				this._pinned = true;
+			}
 		},
+
 
 		// Fall back to the default icon when the configured name is not in Frappe's sprite.
 		get_icon_html(name, size = "md") {

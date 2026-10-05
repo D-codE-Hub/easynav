@@ -161,11 +161,28 @@
 
 .easynav-item-icon .icon {
 	stroke: currentColor;
+	opacity: 0.8;
 }
 
 .easynav-item-label {
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+
+/* tablet / small screens: compact button, menu always fits the viewport */
+@media (max-width: 768px) {
+	.easynav-root {
+		--easynav-offset: 16px;
+		--easynav-size: 44px;
+	}
+
+	.easynav-item {
+		padding: 12px var(--padding-md, 12px); /* larger touch target */
+	}
+}
+
+.easynav-button:active {
+	transform: scale(0.96);
 }
 
 @media (prefers-reduced-motion: reduce) {
