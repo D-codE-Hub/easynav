@@ -27,8 +27,7 @@
    "fieldname": "label",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Label",
-   "reqd": 1
+   "label": "Label"
   },
   {
    "fieldname": "icon",
@@ -50,8 +49,7 @@
    "fieldname": "target",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Target",
-   "reqd": 1
+   "label": "Target"
   },
   {
    "columns": 1,

@@ -28,6 +28,8 @@ class EasyNavSettings(Document):
 
 	def validate(self):
 		for item in self.items:
+			if not item.enabled:
+				continue
 			if error := get_item_error(item):
 				frappe.throw(_("Row #{0}: {1}").format(item.idx, error), title=_("Invalid Navigation Item"))
 

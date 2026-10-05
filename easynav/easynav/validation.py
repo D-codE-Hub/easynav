@@ -1,9 +1,11 @@
+import re
 from urllib.parse import urlsplit
 
 import frappe
 from frappe import _
 
 ALLOWED_SCHEMES = ("http", "https")
+ICON_PATTERN = re.compile(r"^[\w-]+$")
 
 
 def is_safe_url(url: str | None) -> bool:
@@ -24,8 +26,14 @@ def get_item_error(item) -> str | None:
 	label = (item.label or "").strip()
 	target = (item.target or "").strip()
 
+	icon = (item.icon or "").strip()
+
 	if not label:
 		return _("Label is required")
+	if icon and not ICON_PATTERN.match(icon):
+		return _("Icon {0} is not a valid icon name").format(frappe.bold(icon))
+	if (item.order or 0) < 0:
+		return _("Order cannot be negative")
 	if not target:
 		return _("Target is required")
 

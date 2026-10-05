@@ -59,7 +59,12 @@ _RESOLVERS = {
 
 def _resolve_item(item) -> dict | None:
 	"""Return the frontend payload for one item, or None if it is invalid or not permitted."""
-	if not item.enabled or get_item_error(item):
+	if not item.enabled:
+		return None
+
+	if error := get_item_error(item):
+		# one bad item must never break the menu; leave a trace for administrators
+		frappe.logger("easynav").warning(f"Skipping navigation item #{item.idx} ({item.label}): {error}")
 		return None
 
 	target = item.target.strip()

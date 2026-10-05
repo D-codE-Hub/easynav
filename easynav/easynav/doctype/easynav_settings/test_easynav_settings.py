@@ -41,3 +41,18 @@ class TestEasyNavSettings(IntegrationTestCase):
 			self.assertTrue(is_safe_url(url), url)
 		for url in ("javascript:alert(1)", "data:text/html,x", "//evil.com", "ftp://a.com", "", "https://", "/\\evil.com"):
 			self.assertFalse(is_safe_url(url), url)
+
+	def test_icon_and_order_validation(self):
+		self._add(icon="bad icon!")
+		self.assertRaises(frappe.ValidationError, self.settings.save)
+		self.settings.items = []
+		self._add(icon="users", order=-1)
+		self.assertRaises(frappe.ValidationError, self.settings.save)
+		self.settings = frappe.get_doc("EasyNav Settings")
+		self.settings.items = []
+		self._add(icon="users", order=1)
+		self.settings.save()
+
+	def test_disabled_invalid_item_can_be_saved(self):
+		self._add(label="Draft", target="", enabled=0)
+		self.settings.save()
