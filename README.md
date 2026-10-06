@@ -60,7 +60,7 @@ Settings are validated on save:
 ## How it works
 
 ```text
-EasyNav Settings --> build_navigation(user) --> frappe.boot.easynav --> easynav.js --> floating UI
+EasyNav Settings --> build_navigation() --> frappe.boot.easynav --> easynav.js --> floating UI
                        (filter + resolve)       (no extra request)
 ```
 

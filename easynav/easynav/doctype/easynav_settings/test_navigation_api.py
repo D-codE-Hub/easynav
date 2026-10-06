@@ -17,7 +17,7 @@ class TestNavigationAPI(IntegrationTestCase):
 
 	def _save(self):
 		self.settings.save()
-		return build_navigation("Administrator")
+		return build_navigation()
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
@@ -56,16 +56,18 @@ class TestNavigationAPI(IntegrationTestCase):
 		frappe.db.set_value("EasyNav Item", self.settings.items[0].name, "target", "javascript:alert(1)")
 		frappe.db.set_value("EasyNav Item", self.settings.items[0].name, "type", "URL")
 		frappe.clear_cache()
-		self.assertEqual(build_navigation("Administrator")["items"], [])
+		self.assertEqual(build_navigation()["items"], [])
 
 	def test_permission_filtering_and_guest(self):
 		self._add(label="Sys", target="System Settings")
 		self._add(label="Users", target="User")
 		self.settings.save()
 		frappe.clear_cache()
-		self.assertEqual(len(build_navigation("Administrator")["items"]), 2)
-		self.assertFalse(build_navigation("Guest")["enabled"])
-		self.assertEqual(build_navigation("Guest")["items"], [])
+		self.assertEqual(len(build_navigation()["items"]), 2)
+		frappe.set_user("Guest")
+		self.assertFalse(build_navigation()["enabled"])
+		self.assertEqual(build_navigation()["items"], [])
+		frappe.set_user("Administrator")
 
 		email = "easynav-test@example.com"
 		if not frappe.db.exists("User", email):

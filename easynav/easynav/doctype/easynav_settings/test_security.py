@@ -63,7 +63,8 @@ class TestEasyNavSecurity(IntegrationTestCase):
 		frappe.set_user("Administrator")
 
 	def _labels(self, user):
-		return [i["label"] for i in build_navigation(user)["items"]]
+		frappe.set_user(user)
+		return [i["label"] for i in build_navigation()["items"]]
 
 	def test_restricted_user_only_sees_public_items(self):
 		labels = self._labels(self.limited)
@@ -82,11 +83,6 @@ class TestEasyNavSecurity(IntegrationTestCase):
 		# System Manager has no Server Script permission, so EasyNav must hide it too
 		self.assertEqual(self._labels(self.manager), ["Settings", "Report", "Site"])
 
-	def test_session_user_is_restored(self):
-		frappe.set_user(self.limited)
-		build_navigation(self.manager)
-		self.assertEqual(frappe.session.user, self.limited)
-
 	def test_payload_has_no_settings_internals(self):
 		frappe.set_user(self.limited)
 		data = get_navigation()
@@ -102,7 +98,8 @@ class TestEasyNavSecurity(IntegrationTestCase):
 
 	def test_api_is_not_guest_accessible(self):
 		self.assertNotIn(get_navigation, frappe.guest_methods)
-		self.assertTrue(build_navigation("Guest")["items"] == [])
+		frappe.set_user("Guest")
+		self.assertTrue(build_navigation()["items"] == [])
 
 	def test_stored_unsafe_urls_are_never_returned(self):
 		settings = frappe.get_doc("EasyNav Settings")

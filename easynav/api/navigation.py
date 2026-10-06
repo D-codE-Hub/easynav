@@ -87,14 +87,14 @@ def _resolve_item(item) -> dict | None:
 	}
 
 
-def build_navigation(user: str | None = None) -> dict:
-	"""Build the navigation payload for `user` (default: session user).
+def build_navigation() -> dict:
+	"""Build the navigation payload for the session user.
 
 	The settings are read without a permission check on purpose: normal users cannot read
 	EasyNav Settings, but they should get the menu. Only items the user is allowed to open
 	are included, so nothing is exposed that they could not reach through Frappe itself.
 	"""
-	user = user or frappe.session.user
+	user = frappe.session.user
 	empty = {"enabled": False, "position": "bottom-right", "button": {}, "items": []}
 
 	if not user or user == "Guest":
@@ -106,14 +106,7 @@ def build_navigation(user: str | None = None) -> dict:
 
 	rows = sorted(settings.items, key=lambda row: (row.order or UNORDERED, row.idx))
 
-	session_user = frappe.session.user
-	try:
-		if user != session_user:
-			frappe.set_user(user)
-		items = [item for row in rows if (item := _resolve_item(row))]
-	finally:
-		if user != session_user:
-			frappe.set_user(session_user)
+	items = [item for row in rows if (item := _resolve_item(row))]
 
 	return {
 		"enabled": True,
