@@ -54,6 +54,8 @@ Saved changes show up immediately for the person who saved them. Other users see
 | Icon | Optional icon name (letters, digits, `_`, `-`). Falls back to a default per type |
 | Type | `DocType`, `Page`, `Report`, `Dashboard` or `URL` |
 | Link To | Shown for `DocType`, `Page`, `Report` and `Dashboard`: pick the record of that type to open |
+| DocType View | Shown for `DocType` only: `List`, `Report Builder`, `Dashboard`, `Tree`, `New`, `Calendar`, `Kanban` or `Image`. Blank opens the default view |
+| Kanban Board | Shown when DocType View is `Kanban`: optional board to open |
 | URL | Shown for `URL` only: the address to open |
 | Open in New Tab | Opens in a new browser tab |
 | Order | Lower first. Items with no order (blank or `0`) follow in row order |
@@ -62,7 +64,7 @@ Where each type takes the user:
 
 | Type | Opens |
 |---|---|
-| DocType | The list view, or the form for Single DocTypes |
+| DocType | The chosen DocType View (the list view when blank), or the form for Single DocTypes |
 | Page | The Desk page |
 | Report | The report view (Query/Script reports and Report Builder reports) |
 | Dashboard | The dashboard view |
@@ -74,6 +76,7 @@ Settings are checked on save, and the row with the problem is named in the error
 
 - Enabled rows need a label, plus a Link To (or a URL for `URL` rows).
 - The DocType, Page, Report or Dashboard in Link To must exist. Child-table DocTypes are rejected.
+- The Tree view needs a tree DocType, and a Kanban Board must belong to the selected DocType.
 - URLs must be `http(s)://...` or a path starting with a single `/`.
 - Icon names must be a plain name; Order cannot be negative.
 
@@ -85,7 +88,7 @@ EasyNav is not a permission system. It only hides menu items the current user ca
 
 | Type | Shown to a user when |
 |---|---|
-| DocType | They have read permission on the DocType |
+| DocType | They have read permission on the DocType (create permission for the `New` view, report permission for `Report Builder`) |
 | Page | Their roles are allowed to open the Page |
 | Report | Their roles are allowed to open the Report and they have report permission on its DocType |
 | Dashboard | They have read permission on the Dashboard |

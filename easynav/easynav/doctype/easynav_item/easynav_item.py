@@ -13,8 +13,10 @@ class EasyNavItem(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		doc_view: DF.Literal["", "List", "Report Builder", "Dashboard", "Tree", "New", "Calendar", "Kanban", "Image"]
 		enabled: DF.Check
 		icon: DF.Data | None
+		kanban_board: DF.Link | None
 		label: DF.Data | None
 		link_to: DF.DynamicLink | None
 		open_in_new_tab: DF.Check

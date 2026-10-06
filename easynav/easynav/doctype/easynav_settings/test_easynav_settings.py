@@ -40,6 +40,15 @@ class TestEasyNavSettings(IntegrationTestCase):
 		self._add(label="Site", type="URL", link_to=None, url="javascript:alert(1)")
 		self.assertRaises(frappe.ValidationError, self.settings.save)
 
+	def test_doc_view_validation(self):
+		self._add(doc_view="Tree")  # User is not a tree DocType
+		self.assertRaises(frappe.ValidationError, self.settings.save)
+		self.settings = frappe.get_doc("EasyNav Settings")
+		self.settings.items = []
+		self._add(doc_view="Report Builder")
+		self._add(link_to="System Settings", doc_view="Tree")  # ignored for Single DocTypes
+		self.settings.save()
+
 	def test_child_table_rejected(self):
 		self._add(link_to="EasyNav Item")
 		self.assertRaises(frappe.ValidationError, self.settings.save)

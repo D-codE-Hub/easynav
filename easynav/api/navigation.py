@@ -16,14 +16,45 @@ def _slug(name: str) -> str:
 	return frappe.scrub(name).replace("_", "-")
 
 
-def _resolve_doctype(target: str) -> dict | None:
+# DocType View -> route parts after ["List", doctype]; the URL uses the same parts in lower case
+_LIST_VIEWS = {
+	"List": ["List"],
+	"Report Builder": ["Report"],
+	"Dashboard": ["Dashboard"],
+	"Calendar": ["Calendar", "default"],
+	"Kanban": ["Kanban"],
+	"Image": ["Image"],
+}
+# permission needed to open a view, when it is more than read
+_VIEW_PERMISSIONS = {"New": "create", "Report Builder": "report"}
+
+
+def _resolve_doctype(item) -> dict | None:
+	target = item.link_to.strip()
 	if not frappe.has_permission(target, "read"):
 		return None
 
+	slug = _slug(target)
 	if frappe.get_meta(target).issingle:
-		return {"route": ["Form", target], "path": f"/app/{_slug(target)}"}
+		return {"route": ["Form", target], "path": f"/app/{slug}"}
 
-	return {"route": ["List", target], "path": f"/app/{_slug(target)}"}
+	doc_view = item.doc_view or ""
+	if doc_view in _VIEW_PERMISSIONS and not frappe.has_permission(target, _VIEW_PERMISSIONS[doc_view]):
+		return None
+
+	if doc_view == "New":
+		return {"route": [slug, "new"], "path": f"/app/{slug}/new"}
+	if doc_view == "Tree":
+		return {"route": ["Tree", target], "path": f"/app/{slug}/view/tree"}
+	if doc_view in _LIST_VIEWS:
+		parts = _LIST_VIEWS[doc_view]
+		route, path = ["List", target, *parts], f"/app/{slug}/view/{'/'.join(parts).lower()}"
+		if doc_view == "Kanban" and item.kanban_board:
+			route.append(item.kanban_board)
+			path += f"/{item.kanban_board}"
+		return {"route": route, "path": path}
+
+	return {"route": ["List", target], "path": f"/app/{slug}"}
 
 
 def _resolve_page(target: str) -> dict | None:
@@ -58,7 +89,6 @@ def _resolve_dashboard(target: str) -> dict | None:
 
 
 _RESOLVERS = {
-	"DocType": _resolve_doctype,
 	"Page": _resolve_page,
 	"Report": _resolve_report,
 	"Dashboard": _resolve_dashboard,
@@ -81,7 +111,7 @@ def _resolve_item(item) -> dict | None:
 			return None
 		resolved = {"url": target}
 	else:
-		resolved = _RESOLVERS[item.type](target)
+		resolved = _resolve_doctype(item) if item.type == "DocType" else _RESOLVERS[item.type](target)
 		if resolved is None:
 			return None
 

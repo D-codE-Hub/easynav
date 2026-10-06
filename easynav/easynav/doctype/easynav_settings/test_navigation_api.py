@@ -49,6 +49,26 @@ class TestNavigationAPI(IntegrationTestCase):
 		self.assertEqual(items["Site"]["url"], "https://example.com")
 		self.assertTrue(items["Site"]["open_in_new_tab"])
 
+	def test_doc_view_routes(self):
+		expected = {
+			"": (["List", "User"], "/app/user"),
+			"List": (["List", "User", "List"], "/app/user/view/list"),
+			"Report Builder": (["List", "User", "Report"], "/app/user/view/report"),
+			"Dashboard": (["List", "User", "Dashboard"], "/app/user/view/dashboard"),
+			"New": (["user", "new"], "/app/user/new"),
+			"Calendar": (["List", "User", "Calendar", "default"], "/app/user/view/calendar/default"),
+			"Kanban": (["List", "User", "Kanban"], "/app/user/view/kanban"),
+			"Image": (["List", "User", "Image"], "/app/user/view/image"),
+		}
+		for doc_view in expected:
+			self._add(label=doc_view or "Default", doc_view=doc_view)
+		self._add(label="Single", link_to="System Settings", doc_view="List")
+		items = {i["label"]: i for i in self._save()["items"]}
+		for doc_view, (route, path) in expected.items():
+			item = items[doc_view or "Default"]
+			self.assertEqual((item["route"], item["path"]), (route, path), doc_view)
+		self.assertEqual(items["Single"]["route"], ["Form", "System Settings"])
+
 	def test_dashboard_route(self):
 		if not frappe.db.exists("Dashboard", "EasyNav Test Dashboard"):
 			frappe.get_doc({"doctype": "Dashboard", "dashboard_name": "EasyNav Test Dashboard"}).insert(
