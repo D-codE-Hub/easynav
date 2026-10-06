@@ -7,6 +7,8 @@ from frappe import _
 ALLOWED_SCHEMES = ("http", "https")
 ICON_PATTERN = re.compile(r"^[\w-]+$")
 DOC_VIEWS = ("List", "Report Builder", "Dashboard", "Tree", "New", "Calendar", "Kanban", "Image")
+# upper bound per user: the items are sent to the browser on every boot
+MAX_ITEMS = 30
 
 
 def is_safe_url(url: str | None) -> bool:

@@ -5,6 +5,7 @@
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
 easynav.patches.split_item_target
+easynav.patches.remove_global_items
 
 [post_fixture_sync]
 # Patches added in this section will be executed after fixtures and customizations

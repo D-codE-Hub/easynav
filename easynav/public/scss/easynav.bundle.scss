@@ -48,6 +48,9 @@
 	box-shadow: var(--shadow-md);
 	cursor: pointer;
 	pointer-events: auto;
+	/* a long press opens the editor: keep the OS from selecting text or showing its own callout */
+	-webkit-touch-callout: none;
+	user-select: none;
 	transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -154,6 +157,12 @@
 
 .easynav-item:focus-visible {
 	box-shadow: inset 0 0 0 2px var(--btn-primary, var(--primary));
+}
+
+.easynav-empty {
+	padding: var(--padding-sm, 8px) var(--padding-md, 12px);
+	color: var(--text-muted);
+	font-size: var(--text-sm, 13px);
 }
 
 .easynav-item-icon {
