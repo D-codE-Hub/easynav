@@ -139,7 +139,9 @@ This is a one-way change. After the upgrade the old global menu is gone and cann
 | Dashboard | Desk User (and above) |
 | Kanban Board | Desk User (and above) |
 
-A normal user therefore gets no suggestions for DocType and Page items. V2 adds a custom search:
+> **Correction found in Phase 4:** Frappe's link search special-cases `DocType` and runs it without a permission check, so a normal user does get DocType suggestions, but for every DocType, including ones they cannot read. Only Pages return nothing. The custom search below is still used for both: it is required for Pages, and for DocTypes it limits the suggestions to what the user can open.
+
+V2 adds a custom search:
 
 - New module `easynav/api/search.py` with `search_targets(doctype, txt, searchfield, start, page_len, filters)`, registered with `@frappe.whitelist()` and `@frappe.validate_and_sanitize_search_inputs`.
 - It returns only targets the session user may open: DocTypes with `istable = 0` and `frappe.has_permission(name, "read")`; Pages where `is_permitted()` is true.

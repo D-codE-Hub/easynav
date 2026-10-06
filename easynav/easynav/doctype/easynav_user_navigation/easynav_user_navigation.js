@@ -3,14 +3,28 @@
 
 frappe.ui.form.on("EasyNav User Navigation", {
 	setup(frm) {
-		// `link_to` lists records of the selected type; child tables cannot be opened directly
+		// DocTypes and Pages are searched through EasyNav, so only the ones the user can open are
+		// offered; the other types use the standard, permission-aware link search
 		frm.set_query("link_to", "items", (doc, cdt, cdn) => {
 			const row = locals[cdt][cdn];
-			return row.type === "DocType" ? { filters: { istable: 0 } } : {};
+			return ["DocType", "Page"].includes(row.type)
+				? { query: "easynav.api.search.search_targets" }
+				: {};
 		});
 		frm.set_query("kanban_board", "items", (doc, cdt, cdn) => {
 			return { filters: { reference_doctype: locals[cdt][cdn].link_to } };
 		});
+	},
+
+	refresh(frm) {
+		const own = frm.doc.user === frappe.session.user;
+		frm.toggle_display("user", !own);
+		if (own) {
+			frm.page.set_title(__("My Shortcuts"));
+		} else {
+			// only support users get here
+			frm.set_intro(__("You are editing the shortcuts of {0}.", [frm.doc.user.bold()]), "blue");
+		}
 	},
 
 	// apply changes immediately instead of waiting for a full reload;
