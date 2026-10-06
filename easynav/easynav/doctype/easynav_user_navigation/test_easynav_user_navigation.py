@@ -1,6 +1,7 @@
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from easynav.api.navigation import build_navigation
 from easynav.easynav.validation import MAX_ITEMS
 
 DOCTYPE = "EasyNav User Navigation"
@@ -121,6 +122,27 @@ class TestEasyNavUserNavigation(IntegrationTestCase):
 		self.assertEqual([row.label for row in doc.reload().items], ["Fixed"])
 		self.assertTrue(frappe.has_permission(DOCTYPE, "delete", doc=doc))
 		self.assertFalse(frappe.has_permission(DOCTYPE, "create"))
+
+	def test_system_manager_cannot_create_a_list_for_someone_else(self):
+		frappe.set_user("Administrator")
+		frappe.delete_doc(DOCTYPE, self.user_a, ignore_permissions=True)
+
+		frappe.set_user(self.manager)
+		with self.assertRaises(frappe.PermissionError):
+			frappe.get_doc({"doctype": DOCTYPE, "user": self.user_a}).insert()
+		self.assertFalse(frappe.db.exists(DOCTYPE, self.user_a))
+
+	def test_fixing_a_list_does_not_change_the_fixers_menu(self):
+		make_navigation(self.manager, [_url_item("M1")])
+
+		frappe.set_user(self.manager)
+		doc = frappe.get_doc(DOCTYPE, self.user_b)
+		doc.append("items", _url_item("B2"))
+		doc.save()
+		self.assertEqual([i["label"] for i in build_navigation()["items"]], ["M1"])
+
+		frappe.set_user(self.user_b)
+		self.assertEqual([i["label"] for i in build_navigation()["items"]], ["B1", "B2"])
 
 	def test_item_limit(self):
 		doc = frappe.get_doc(DOCTYPE, self.user_a)

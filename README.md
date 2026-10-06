@@ -1,11 +1,12 @@
 # EasyNav
 
-EasyNav is a custom Frappe app that adds one **global floating navigation button** to every Desk page. Administrators configure the menu in a Setup DocType, so no code changes are needed to change the navigation.
+EasyNav is a custom Frappe app that adds one **global floating navigation button** to every Desk page. Every user builds their own menu of shortcuts from the button itself, so no code changes or administrator help are needed.
 
 ![EasyNav menu open on the Desk home](docs/images/menu-open.jpg)
 
 - Quick access to **DocTypes, Pages, Reports, Dashboards and external URLs**
-- Configured in **EasyNav Settings** (enable/disable, position, items, order, open in new tab)
+- **Personal**: each user adds, edits and orders their own shortcuts, and nobody else sees them
+- Site-wide options (enable/disable, button label, icon, position) are set in **EasyNav Settings**
 - **Respects Frappe permissions**: users only see items they are allowed to open
 
 ## Using the menu
@@ -19,17 +20,22 @@ The floating button appears on every Desk page for logged-in users.
 | Hover the button (mouse only) | Opens the menu; it closes when the pointer leaves |
 | `ArrowDown` / `ArrowUp` | Moves through the menu items |
 | Click an item | Opens it, in the same tab or a new tab as configured |
+| Click **Edit shortcuts** (last entry) | Opens your own list of shortcuts |
 | Ctrl/Cmd-click or middle-click an item | Opens it in a new browser tab |
 
 The menu closes automatically when you move to another Desk page. The button is not shown on printed pages, and it sits behind open dialogs.
 
-The button is hidden when:
+The button is hidden only when EasyNav is disabled in the settings. A user with no shortcuts still sees it: the menu then says **No shortcuts yet** and offers **Add shortcuts**.
 
-- EasyNav is disabled in the settings,
-- no navigation items are configured, or
-- the user is not permitted to open any of the configured items.
+## Your shortcuts
 
-## Configuration
+Open the menu and click **Edit shortcuts** (or **Add shortcuts** the first time). This opens **My Shortcuts**, your own list. Add rows to the table and save; the menu updates straight away.
+
+- The list belongs to you. Other users cannot see or change it, and you cannot see theirs.
+- You can keep up to **30** items.
+- The fields of each row are described under [Navigation items](#navigation-items).
+
+## Site-wide settings
 
 Open **EasyNav Settings** (`/desk/easynav-settings`, System Manager only).
 
@@ -41,11 +47,12 @@ Open **EasyNav Settings** (`/desk/easynav-settings`, System Manager only).
 | Button Label | Tooltip / accessible name of the button (defaults to `EasyNav`) |
 | Button Icon | Icon of the floating button (defaults to `menu`) |
 | Position | Bottom Right (default), Bottom Left, Top Right, Top Left |
-| Navigation Items | The menu entries (below) |
 
-Saved changes show up immediately for the person who saved them. Other users see them the next time they load Desk.
+These options apply to everyone. Saved changes show up immediately for the person who saved them. Other users see them the next time they load Desk.
 
-### Navigation items
+System Managers can also open **EasyNav User Navigation** (`/desk/easynav-user-navigation`) to view or fix any user's existing list. A list is created the first time its user opens the editor, so there is nothing to fix before that.
+
+## Navigation items
 
 | Field | Notes |
 |---|---|
@@ -53,7 +60,7 @@ Saved changes show up immediately for the person who saved them. Other users see
 | Label | Text shown in the menu |
 | Icon | Optional icon name (letters, digits, `_`, `-`). Falls back to a default per type |
 | Type | `DocType`, `Page`, `Report`, `Dashboard` or `URL` |
-| Link To | Shown for `DocType`, `Page`, `Report` and `Dashboard`: pick the record of that type to open |
+| Link To | Shown for `DocType`, `Page`, `Report` and `Dashboard`: pick the record of that type to open. Only records you are allowed to open are suggested |
 | DocType View | Shown for `DocType` only: `List`, `Report Builder`, `Dashboard`, `Tree`, `New`, `Calendar`, `Kanban` or `Image`. Blank opens the default view |
 | Kanban Board | Shown when DocType View is `Kanban`: optional board to open |
 | URL | Shown for `URL` only: the address to open |
@@ -72,15 +79,16 @@ Where each type takes the user:
 
 ### Validation
 
-Settings are checked on save, and the row with the problem is named in the error:
+A list is checked on save, and the row with the problem is named in the error:
 
 - Enabled rows need a label, plus a Link To (or a URL for `URL` rows).
 - The DocType, Page, Report or Dashboard in Link To must exist. Child-table DocTypes are rejected.
 - The Tree view needs a tree DocType, and a Kanban Board must belong to the selected DocType.
 - URLs must be `http(s)://...` or a path starting with a single `/`.
 - Icon names must be a plain name; Order cannot be negative.
+- A list can hold at most 30 items.
 
-If a target is deleted or renamed after the settings were saved, that item is left out of the menu and the rest keep working.
+If a target is deleted or renamed after the list was saved, that item is left out of the menu and the rest keep working.
 
 ## Permissions
 
@@ -95,8 +103,14 @@ EasyNav is not a permission system. It only hides menu items the current user ca
 | URL | Always |
 
 - Only System Managers can view or change EasyNav Settings.
+- A user can only read and change their own shortcuts. System Managers can view, change and delete any user's list, and those edits are recorded in the document history.
+- If someone else adds an item to your list that you are not allowed to open, it is not shown to you.
 - Guests never see the button.
 - Links using `javascript:`, `data:` and similar schemes are blocked.
+
+## Upgrading from the shared menu
+
+Earlier versions had one menu for everyone, configured in EasyNav Settings. That shared list is **not carried over**: `bench migrate` deletes it, and every user starts with an empty menu. Note down the old items before upgrading if users will want to re-create them.
 
 ## License
 
