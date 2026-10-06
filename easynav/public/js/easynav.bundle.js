@@ -5,6 +5,8 @@
 
 	const ROOT_ID = "easynav-root";
 	const DEFAULT_ICON = "menu";
+	const EDIT_ICON = "pencil";
+	const USER_NAVIGATION = "EasyNav User Navigation";
 	const TYPE_ICONS = {
 		DocType: "list",
 		Page: "layout-dashboard",
@@ -38,7 +40,7 @@
 			this.render();
 		},
 
-		// Re-fetch the configuration from the server (e.g. after EasyNav Settings was saved).
+		// Re-fetch the configuration from the server (e.g. after the user saved their shortcuts).
 		// Not called on route changes: the boot payload is already current for the session.
 		refresh() {
 			return frappe
@@ -67,7 +69,8 @@
 			this.root = this.button = null;
 
 			const config = this.config;
-			if (!config || !config.enabled || !(config.items || []).length) return;
+			// No items is not a reason to hide: the menu is where a user starts adding their own.
+			if (!config || !config.enabled) return;
 
 			const position = POSITIONS.includes(config.position)
 				? config.position
@@ -87,7 +90,7 @@
 				title: label,
 			}).append(this.get_icon_html(config.button && config.button.icon));
 
-			const $menu = this.build_menu(config.items);
+			const $menu = this.build_menu(config.items || []);
 
 			$root.append($menu, $button).appendTo(document.body);
 			this.root = $root[0];
@@ -97,7 +100,7 @@
 			this.bind_events($root, $button);
 		},
 
-		// Labels and targets are admin-entered text: only ever set via .text()/attr().
+		// Labels and targets are user-entered text: only ever set via .text()/attr().
 		build_menu(items) {
 			const $menu = $("<div>", {
 				class: "easynav-menu",
@@ -122,7 +125,31 @@
 				$menu.append($item);
 			});
 
+			if (items.length) {
+				$menu.append($("<div>", { class: "easynav-divider", role: "separator" }));
+			} else {
+				$menu.append($("<div>", { class: "easynav-empty" }).text(__("No shortcuts yet")));
+			}
+			$menu.append(this.build_edit_item(items.length));
+
 			return $menu;
+		},
+
+		// Every user owns their shortcuts; this entry opens their EasyNav User Navigation.
+		build_edit_item(has_items) {
+			return $("<button>", {
+				type: "button",
+				class: "easynav-item easynav-item--action",
+				role: "menuitem",
+				tabindex: "-1",
+			}).append(
+				$("<span>", { class: "easynav-item-icon" }).append(
+					this.get_icon_html(EDIT_ICON, "sm")
+				),
+				$("<span>", { class: "easynav-item-label" }).text(
+					has_items ? __("Edit shortcuts") : __("Add shortcuts")
+				)
+			);
 		},
 
 		// Real href keeps middle-click / copy-link working; plain clicks are routed in on_item_click.
@@ -132,6 +159,11 @@
 		},
 
 		on_item_click(e) {
+			if (e.currentTarget.classList.contains("easynav-item--action")) {
+				this.close();
+				return this.customize();
+			}
+
 			const item = $(e.currentTarget).data("easynav-item");
 			this.close();
 
@@ -140,6 +172,15 @@
 
 			e.preventDefault();
 			this.navigate(item);
+		},
+
+		// The document is created on first use; the server only ever returns the session user's own.
+		customize() {
+			return frappe
+				.call({ method: "easynav.api.navigation.get_user_navigation" })
+				.then((r) => {
+					if (r.message) frappe.set_route("Form", USER_NAVIGATION, r.message);
+				});
 		},
 
 		// Explicit handling per type. Never assigns item.target to window.location directly.
