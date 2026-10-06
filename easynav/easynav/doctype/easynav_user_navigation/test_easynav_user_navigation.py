@@ -8,7 +8,7 @@ DOCTYPE = "EasyNav User Navigation"
 IGNORE_TEST_RECORD_DEPENDENCIES = ["User"]
 
 
-def _make_user(email: str, roles: list[str]):
+def make_user(email: str, roles: list[str]):
 	if frappe.db.exists("User", email):
 		user = frappe.get_doc("User", email)
 	else:
@@ -17,6 +17,8 @@ def _make_user(email: str, roles: list[str]):
 		).insert(ignore_permissions=True)
 	user.roles = []
 	for role in roles:
+		if not frappe.db.exists("Role", role):
+			frappe.get_doc({"doctype": "Role", "role_name": role}).insert(ignore_permissions=True)
 		user.append("roles", {"role": role})
 	user.save(ignore_permissions=True)
 	return email
@@ -26,11 +28,12 @@ def _url_item(label: str) -> dict:
 	return {"label": label, "type": "URL", "url": "https://example.com"}
 
 
-def _make_navigation(user: str, labels: list[str]):
+def make_navigation(user: str, items: list[dict] | None = None):
+	"""Replace the user's shortcuts. Must run as a support user, who may save for anyone."""
 	frappe.delete_doc(DOCTYPE, user, ignore_permissions=True, ignore_missing=True)
-	return frappe.get_doc(
-		{"doctype": DOCTYPE, "user": user, "items": [_url_item(label) for label in labels]}
-	).insert()
+	return frappe.get_doc({"doctype": DOCTYPE, "user": user, "items": items or []}).insert(
+		ignore_permissions=True
+	)
 
 
 class TestEasyNavUserNavigation(IntegrationTestCase):
@@ -41,14 +44,14 @@ class TestEasyNavUserNavigation(IntegrationTestCase):
 		super().setUpClass()
 		frappe.set_user("Administrator")
 		# any desk role makes these System Users, which gives them the automatic Desk User role
-		cls.user_a = _make_user("easynav-a@example.com", ["Script Manager"])
-		cls.user_b = _make_user("easynav-b@example.com", ["Script Manager"])
-		cls.manager = _make_user("easynav-manager@example.com", ["System Manager"])
+		cls.user_a = make_user("easynav-a@example.com", ["Script Manager"])
+		cls.user_b = make_user("easynav-b@example.com", ["Script Manager"])
+		cls.manager = make_user("easynav-manager@example.com", ["System Manager"])
 
 	def setUp(self):
 		frappe.set_user("Administrator")
-		_make_navigation(self.user_a, ["A1"])
-		_make_navigation(self.user_b, ["B1"])
+		make_navigation(self.user_a, [_url_item("A1")])
+		make_navigation(self.user_b, [_url_item("B1")])
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
@@ -154,8 +157,8 @@ class TestEasyNavUserNavigation(IntegrationTestCase):
 		email, renamed = "easynav-temp@example.com", "easynav-renamed@example.com"
 		for name in (email, renamed):
 			frappe.delete_doc("User", name, ignore_permissions=True, ignore_missing=True, force=True)
-		_make_user(email, ["Script Manager"])
-		_make_navigation(email, ["T1"])
+		make_user(email, ["Script Manager"])
+		make_navigation(email, [_url_item("T1")])
 
 		frappe.rename_doc("User", email, renamed, force=True)
 		self.assertFalse(frappe.db.exists(DOCTYPE, email))

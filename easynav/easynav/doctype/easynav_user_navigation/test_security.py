@@ -2,24 +2,12 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 from easynav.api.navigation import build_navigation, get_navigation
+from easynav.easynav.doctype.easynav_user_navigation.test_easynav_user_navigation import (
+	make_navigation,
+	make_user,
+)
 
-PASSWORD_FREE = {"send_welcome_email": 0}
-
-
-def _make_user(email: str, roles: list[str]):
-	if frappe.db.exists("User", email):
-		user = frappe.get_doc("User", email)
-	else:
-		user = frappe.get_doc(
-			{"doctype": "User", "email": email, "first_name": email.split("@")[0], **PASSWORD_FREE}
-		).insert(ignore_permissions=True)
-	user.roles = []
-	for role in roles:
-		if not frappe.db.exists("Role", role):
-			frappe.get_doc({"doctype": "Role", "role_name": role}).insert(ignore_permissions=True)
-		user.append("roles", {"role": role})
-	user.save(ignore_permissions=True)
-	return email
+IGNORE_TEST_RECORD_DEPENDENCIES = ["User"]
 
 
 class TestEasyNavSecurity(IntegrationTestCase):
@@ -29,9 +17,9 @@ class TestEasyNavSecurity(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		frappe.set_user("Administrator")
-		cls.limited = _make_user("easynav-limited@example.com", [])  # User C
-		cls.scripter = _make_user("easynav-scripter@example.com", ["Script Manager"])  # User A
-		cls.manager = _make_user("easynav-manager@example.com", ["System Manager"])  # User B
+		cls.limited = make_user("easynav-limited@example.com", [])  # User C
+		cls.scripter = make_user("easynav-scripter@example.com", ["Script Manager"])  # User A
+		cls.manager = make_user("easynav-manager@example.com", ["System Manager"])  # User B
 
 		if not frappe.db.exists("Report", "EasyNav Test Report"):
 			frappe.get_doc(
@@ -49,16 +37,20 @@ class TestEasyNavSecurity(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		settings = frappe.get_doc("EasyNav Settings")
 		settings.enabled = 1
-		settings.items = []
-		for label, type_, target in (
-			("Settings", "DocType", "System Settings"),
-			("Server Script", "DocType", "Server Script"),
-			("Report", "Report", "EasyNav Test Report"),
-			("Site", "URL", "https://example.com"),
-		):
-			field = "url" if type_ == "URL" else "link_to"
-			settings.append("items", {"label": label, "type": type_, field: target})
 		settings.save()
+
+		# every user configures the same items; each must only get back what Frappe lets them open
+		items = [
+			{"label": label, "type": type_, ("url" if type_ == "URL" else "link_to"): target}
+			for label, type_, target in (
+				("Settings", "DocType", "System Settings"),
+				("Server Script", "DocType", "Server Script"),
+				("Report", "Report", "EasyNav Test Report"),
+				("Site", "URL", "https://example.com"),
+			)
+		]
+		for user in ("Administrator", self.limited, self.scripter, self.manager):
+			make_navigation(user, items)
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
@@ -103,9 +95,9 @@ class TestEasyNavSecurity(IntegrationTestCase):
 		self.assertTrue(build_navigation()["items"] == [])
 
 	def test_stored_unsafe_urls_are_never_returned(self):
-		settings = frappe.get_doc("EasyNav Settings")
+		navigation = frappe.get_doc("EasyNav User Navigation", "Administrator")
 		unsafe = ("javascript:alert(1)", "data:text/html,x", "//evil.com", "ftp://x")
-		for row, url in zip(settings.items, unsafe, strict=True):
+		for row, url in zip(navigation.items, unsafe, strict=True):
 			frappe.db.set_value("EasyNav Item", row.name, {"type": "URL", "url": url})
 		frappe.clear_cache()
 		self.assertEqual(self._labels("Administrator"), [])

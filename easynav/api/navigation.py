@@ -1,4 +1,5 @@
 import frappe
+from frappe import _
 
 from easynav.easynav.validation import get_item_error, get_item_target, is_safe_url
 
@@ -9,6 +10,7 @@ POSITIONS = {
 	"Top Left": "top-left",
 }
 DEFAULT_ICON = "menu"
+USER_NAVIGATION = "EasyNav User Navigation"
 UNORDERED = 10**9
 
 
@@ -124,12 +126,21 @@ def _resolve_item(item) -> dict | None:
 	}
 
 
+def _get_user_rows(user: str) -> list:
+	"""Return the navigation items the user configured for themselves."""
+	if not frappe.db.exists(USER_NAVIGATION, user):
+		return []
+
+	return frappe.get_cached_doc(USER_NAVIGATION, user).items
+
+
 def build_navigation() -> dict:
 	"""Build the navigation payload for the session user.
 
-	The settings are read without a permission check on purpose: normal users cannot read
-	EasyNav Settings, but they should get the menu. Only items the user is allowed to open
-	are included, so nothing is exposed that they could not reach through Frappe itself.
+	The site-wide settings are read without a permission check on purpose: normal users cannot
+	read EasyNav Settings, but they should get the menu. The items always come from the session
+	user's own EasyNav User Navigation, and only the ones the user is allowed to open are
+	included, so nothing is exposed that they could not reach through Frappe itself.
 	"""
 	user = frappe.session.user
 	empty = {"enabled": False, "position": "bottom-right", "button": {}, "items": []}
@@ -141,7 +152,7 @@ def build_navigation() -> dict:
 	if not settings.enabled:
 		return empty
 
-	rows = sorted(settings.items, key=lambda row: (row.order or UNORDERED, row.idx))
+	rows = sorted(_get_user_rows(user), key=lambda row: (row.order or UNORDERED, row.idx))
 
 	items = [item for row in rows if (item := _resolve_item(row))]
 
@@ -159,3 +170,17 @@ def build_navigation() -> dict:
 @frappe.whitelist()
 def get_navigation() -> dict:
 	return build_navigation()
+
+
+@frappe.whitelist(methods=["POST"])
+def get_user_navigation() -> str:
+	"""Return the name of the session user's EasyNav User Navigation, creating it on first use."""
+	user = frappe.session.user
+	if not user or user == "Guest":
+		frappe.throw(_("Log in to edit your shortcuts"), frappe.PermissionError)
+
+	# users have no create permission: this is the only way a document comes to exist
+	if not frappe.db.exists(USER_NAVIGATION, user):
+		frappe.get_doc({"doctype": USER_NAVIGATION, "user": user}).insert(ignore_permissions=True)
+
+	return user
