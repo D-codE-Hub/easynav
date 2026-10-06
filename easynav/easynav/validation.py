@@ -21,10 +21,16 @@ def is_safe_url(url: str | None) -> bool:
 	return parts.scheme.lower() in ALLOWED_SCHEMES and bool(parts.netloc)
 
 
+def get_item_target(item) -> str:
+	"""Return what an item opens: `url` for URL items, the record named in `link_to` otherwise."""
+	value = item.url if item.type == "URL" else item.link_to
+	return (value or "").strip()
+
+
 def get_item_error(item) -> str | None:
 	"""Return a message describing why a navigation item is invalid, or None if it is valid."""
 	label = (item.label or "").strip()
-	target = (item.target or "").strip()
+	target = get_item_target(item)
 
 	icon = (item.icon or "").strip()
 
@@ -35,7 +41,7 @@ def get_item_error(item) -> str | None:
 	if (item.order or 0) < 0:
 		return _("Order cannot be negative")
 	if not target:
-		return _("Target is required")
+		return _("URL is required") if item.type == "URL" else _("Link To is required")
 
 	if item.type == "DocType":
 		try:
@@ -50,6 +56,9 @@ def get_item_error(item) -> str | None:
 	elif item.type == "Report":
 		if not frappe.db.exists("Report", target):
 			return _("Report {0} does not exist").format(frappe.bold(target))
+	elif item.type == "Dashboard":
+		if not frappe.db.exists("Dashboard", target):
+			return _("Dashboard {0} does not exist").format(frappe.bold(target))
 	elif item.type == "URL":
 		if not is_safe_url(target):
 			return _("Only http(s) URLs and paths starting with / are allowed")

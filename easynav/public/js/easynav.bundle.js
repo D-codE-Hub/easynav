@@ -9,6 +9,7 @@
 		DocType: "list",
 		Page: "layout-dashboard",
 		Report: "chart-bar",
+		Dashboard: "layout-dashboard",
 		URL: "external-link",
 	};
 	const HOVER_CLOSE_DELAY = 150;
@@ -147,6 +148,7 @@
 				case "DocType":
 				case "Page":
 				case "Report":
+				case "Dashboard":
 					return this.open_route(item);
 				case "URL":
 					return this.open_url(item);

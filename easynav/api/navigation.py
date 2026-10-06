@@ -1,6 +1,6 @@
 import frappe
 
-from easynav.easynav.validation import get_item_error, is_safe_url
+from easynav.easynav.validation import get_item_error, get_item_target, is_safe_url
 
 POSITIONS = {
 	"Bottom Right": "bottom-right",
@@ -50,10 +50,18 @@ def _resolve_report(target: str) -> dict | None:
 	return {"route": ["query-report", target], "path": f"/app/query-report/{target}"}
 
 
+def _resolve_dashboard(target: str) -> dict | None:
+	if not frappe.has_permission("Dashboard", "read", doc=target):
+		return None
+
+	return {"route": ["dashboard-view", target], "path": f"/app/dashboard-view/{target}"}
+
+
 _RESOLVERS = {
 	"DocType": _resolve_doctype,
 	"Page": _resolve_page,
 	"Report": _resolve_report,
+	"Dashboard": _resolve_dashboard,
 }
 
 
@@ -67,7 +75,7 @@ def _resolve_item(item) -> dict | None:
 		frappe.logger("easynav").warning(f"Skipping navigation item #{item.idx} ({item.label}): {error}")
 		return None
 
-	target = item.target.strip()
+	target = get_item_target(item)
 	if item.type == "URL":
 		if not is_safe_url(target):
 			return None
@@ -81,7 +89,6 @@ def _resolve_item(item) -> dict | None:
 		"label": item.label.strip(),
 		"icon": (item.icon or "").strip() or None,
 		"type": item.type,
-		"target": target,
 		"open_in_new_tab": bool(item.open_in_new_tab),
 		**resolved,
 	}

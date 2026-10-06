@@ -13,7 +13,7 @@ class TestNavigationAPI(IntegrationTestCase):
 		self.settings.items = []
 
 	def _add(self, **kw):
-		self.settings.append("items", {"label": "X", "type": "DocType", "target": "User", **kw})
+		self.settings.append("items", {"label": "X", "type": "DocType", "link_to": "User", **kw})
 
 	def _save(self):
 		self.settings.save()
@@ -39,9 +39,9 @@ class TestNavigationAPI(IntegrationTestCase):
 		self.assertEqual([i["label"] for i in self._save()["items"]], ["A", "B", "C"])
 
 	def test_routes(self):
-		self._add(label="List", target="User")
-		self._add(label="Single", target="System Settings")
-		self._add(label="Site", type="URL", target="https://example.com", open_in_new_tab=1)
+		self._add(label="List", link_to="User")
+		self._add(label="Single", link_to="System Settings")
+		self._add(label="Site", type="URL", link_to=None, url="https://example.com", open_in_new_tab=1)
 		items = {i["label"]: i for i in self._save()["items"]}
 		self.assertEqual(items["List"]["route"], ["List", "User"])
 		self.assertEqual(items["List"]["path"], "/app/user")
@@ -49,18 +49,28 @@ class TestNavigationAPI(IntegrationTestCase):
 		self.assertEqual(items["Site"]["url"], "https://example.com")
 		self.assertTrue(items["Site"]["open_in_new_tab"])
 
+	def test_dashboard_route(self):
+		if not frappe.db.exists("Dashboard", "EasyNav Test Dashboard"):
+			frappe.get_doc({"doctype": "Dashboard", "dashboard_name": "EasyNav Test Dashboard"}).insert(
+				ignore_permissions=True
+			)
+		self._add(label="Dash", type="Dashboard", link_to="EasyNav Test Dashboard")
+		item = self._save()["items"][0]
+		self.assertEqual(item["route"], ["dashboard-view", "EasyNav Test Dashboard"])
+		self.assertEqual(item["path"], "/app/dashboard-view/EasyNav Test Dashboard")
+
 	def test_invalid_item_is_skipped(self):
 		self._add(label="Good")
 		self.settings.save()
 		# bypass save-time validation to simulate bad stored data
-		frappe.db.set_value("EasyNav Item", self.settings.items[0].name, "target", "javascript:alert(1)")
+		frappe.db.set_value("EasyNav Item", self.settings.items[0].name, "url", "javascript:alert(1)")
 		frappe.db.set_value("EasyNav Item", self.settings.items[0].name, "type", "URL")
 		frappe.clear_cache()
 		self.assertEqual(build_navigation()["items"], [])
 
 	def test_permission_filtering_and_guest(self):
-		self._add(label="Sys", target="System Settings")
-		self._add(label="Users", target="User")
+		self._add(label="Sys", link_to="System Settings")
+		self._add(label="Users", link_to="User")
 		self.settings.save()
 		frappe.clear_cache()
 		self.assertEqual(len(build_navigation()["items"]), 2)

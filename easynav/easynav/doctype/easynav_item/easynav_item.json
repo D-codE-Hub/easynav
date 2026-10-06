@@ -9,7 +9,8 @@
   "label",
   "icon",
   "type",
-  "target",
+  "link_to",
+  "url",
   "open_in_new_tab",
   "order"
  ],
@@ -41,15 +42,28 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Type",
-   "options": "DocType\nPage\nReport\nURL",
+   "options": "DocType\nPage\nReport\nDashboard\nURL",
    "reqd": 1
   },
   {
-   "columns": 3,
-   "fieldname": "target",
+   "columns": 2,
+   "depends_on": "eval:doc.type != \"URL\"",
+   "fieldname": "link_to",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "label": "Link To",
+   "mandatory_depends_on": "eval:doc.enabled && doc.type != \"URL\"",
+   "options": "type"
+  },
+  {
+   "columns": 2,
+   "depends_on": "eval:doc.type == \"URL\"",
+   "description": "https://example.com or a path on this site such as /app/user",
+   "fieldname": "url",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Target"
+   "label": "URL",
+   "mandatory_depends_on": "eval:doc.enabled && doc.type == \"URL\""
   },
   {
    "columns": 1,
@@ -71,7 +85,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-05 10:00:00.000000",
+ "modified": "2026-10-06 11:00:00.000000",
  "modified_by": "Administrator",
  "module": "EasyNav",
  "name": "EasyNav Item",

@@ -4,7 +4,7 @@ EasyNav is a custom Frappe app that adds one **global floating navigation button
 
 ![EasyNav menu open on the Desk home](docs/images/menu-open.jpg)
 
-- Quick access to **DocTypes, Pages, Reports and external URLs**
+- Quick access to **DocTypes, Pages, Reports, Dashboards and external URLs**
 - Configured in **EasyNav Settings** (enable/disable, position, items, order, open in new tab)
 - **Respects Frappe permissions**: users only see items they are allowed to open
 
@@ -49,11 +49,12 @@ Saved changes show up immediately for the person who saved them. Other users see
 
 | Field | Notes |
 |---|---|
-| Enabled | Disabled rows are never shown and are not validated, so you can keep drafts |
+| Enabled | Disabled rows are never shown and may be left incomplete, so you can keep drafts |
 | Label | Text shown in the menu |
 | Icon | Optional icon name (letters, digits, `_`, `-`). Falls back to a default per type |
-| Type | `DocType`, `Page`, `Report` or `URL` |
-| Target | DocType name, Page name, Report name, or URL |
+| Type | `DocType`, `Page`, `Report`, `Dashboard` or `URL` |
+| Link To | Shown for `DocType`, `Page`, `Report` and `Dashboard`: pick the record of that type to open |
+| URL | Shown for `URL` only: the address to open |
 | Open in New Tab | Opens in a new browser tab |
 | Order | Lower first. Items with no order (blank or `0`) follow in row order |
 
@@ -64,14 +65,15 @@ Where each type takes the user:
 | DocType | The list view, or the form for Single DocTypes |
 | Page | The Desk page |
 | Report | The report view (Query/Script reports and Report Builder reports) |
+| Dashboard | The dashboard view |
 | URL | The URL, either an external site or a path on this site |
 
 ### Validation
 
 Settings are checked on save, and the row with the problem is named in the error:
 
-- Enabled rows need a label and a target.
-- DocType, Page and Report targets must exist. Child-table DocTypes are rejected.
+- Enabled rows need a label, plus a Link To (or a URL for `URL` rows).
+- The DocType, Page, Report or Dashboard in Link To must exist. Child-table DocTypes are rejected.
 - URLs must be `http(s)://...` or a path starting with a single `/`.
 - Icon names must be a plain name; Order cannot be negative.
 
@@ -86,6 +88,7 @@ EasyNav is not a permission system. It only hides menu items the current user ca
 | DocType | They have read permission on the DocType |
 | Page | Their roles are allowed to open the Page |
 | Report | Their roles are allowed to open the Report and they have report permission on its DocType |
+| Dashboard | They have read permission on the Dashboard |
 | URL | Always |
 
 - Only System Managers can view or change EasyNav Settings.

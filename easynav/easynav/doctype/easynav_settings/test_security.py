@@ -56,7 +56,8 @@ class TestEasyNavSecurity(IntegrationTestCase):
 			("Report", "Report", "EasyNav Test Report"),
 			("Site", "URL", "https://example.com"),
 		):
-			settings.append("items", {"label": label, "type": type_, "target": target})
+			field = "url" if type_ == "URL" else "link_to"
+			settings.append("items", {"label": label, "type": type_, field: target})
 		settings.save()
 
 	def tearDown(self):
@@ -105,6 +106,6 @@ class TestEasyNavSecurity(IntegrationTestCase):
 		settings = frappe.get_doc("EasyNav Settings")
 		unsafe = ("javascript:alert(1)", "data:text/html,x", "//evil.com", "ftp://x")
 		for row, url in zip(settings.items, unsafe, strict=True):
-			frappe.db.set_value("EasyNav Item", row.name, {"type": "URL", "target": url})
+			frappe.db.set_value("EasyNav Item", row.name, {"type": "URL", "url": url})
 		frappe.clear_cache()
 		self.assertEqual(self._labels("Administrator"), [])
