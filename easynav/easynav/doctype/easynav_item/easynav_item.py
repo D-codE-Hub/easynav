@@ -13,16 +13,19 @@ class EasyNavItem(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		doc_view: DF.Literal["", "List", "Report Builder", "Dashboard", "Tree", "New", "Calendar", "Kanban", "Image"]
 		enabled: DF.Check
 		icon: DF.Data | None
-		label: DF.Data
+		kanban_board: DF.Link | None
+		label: DF.Data | None
+		link_to: DF.DynamicLink | None
 		open_in_new_tab: DF.Check
 		order: DF.Int
 		parent: DF.Data
 		parentfield: DF.Data
 		parenttype: DF.Data
-		target: DF.Data
-		type: DF.Literal["DocType", "Page", "Report", "URL"]
+		type: DF.Literal["DocType", "Page", "Report", "Dashboard", "URL"]
+		url: DF.Data | None
 	# end: auto-generated types
 
 	pass

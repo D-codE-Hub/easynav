@@ -41,11 +41,16 @@
 	padding: 0;
 	border: 1px solid var(--border-color);
 	border-radius: 50%;
-	background-color: var(--primary, var(--gray-900));
+	/* same pair as Frappe's .btn-primary: both tokens flip together with the light/dark theme */
+	background-color: var(--btn-primary, var(--gray-900));
 	color: var(--neutral, #fff);
+	--icon-stroke: currentColor;
 	box-shadow: var(--shadow-md);
 	cursor: pointer;
 	pointer-events: auto;
+	/* a long press opens the editor: keep the OS from selecting text or showing its own callout */
+	-webkit-touch-callout: none;
+	user-select: none;
 	transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -55,7 +60,7 @@
 }
 
 .easynav-button:focus-visible {
-	outline: 2px solid var(--primary);
+	outline: 2px solid var(--btn-primary, var(--primary));
 	outline-offset: 3px;
 }
 
@@ -151,7 +156,13 @@
 }
 
 .easynav-item:focus-visible {
-	box-shadow: inset 0 0 0 2px var(--primary);
+	box-shadow: inset 0 0 0 2px var(--btn-primary, var(--primary));
+}
+
+.easynav-empty {
+	padding: var(--padding-sm, 8px) var(--padding-md, 12px);
+	color: var(--text-muted);
+	font-size: var(--text-sm, 13px);
 }
 
 .easynav-item-icon {

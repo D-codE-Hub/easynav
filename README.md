@@ -1,30 +1,41 @@
 # EasyNav
 
-EasyNav is a custom Frappe app that adds one **global floating navigation button** to every Desk page. Administrators configure the menu in a Setup DocType, so no code changes are needed to change the navigation.
+EasyNav is a custom Frappe app that adds one **global floating navigation button** to every Desk page. Every user builds their own menu of shortcuts from the button itself, so no code changes or administrator help are needed.
 
 ![EasyNav menu open on the Desk home](docs/images/menu-open.jpg)
 
-- Quick access to **DocTypes, Pages, Reports and external URLs**
-- Configured in **EasyNav Settings** (enable/disable, position, items, order, open in new tab)
+- Quick access to **DocTypes, Pages, Reports, Dashboards and external URLs**
+- **Personal**: each user adds, edits and orders their own shortcuts, and nobody else sees them
+- Site-wide options (enable/disable, button label, icon, position) are set in **EasyNav Settings**
 - **Respects Frappe permissions**: users only see items they are allowed to open
-- Tiny footprint: no extra request on page load, about 3 KB (gzipped) of JS
 
-Tested against Frappe `17.0.0-dev`.
+## Using the menu
 
-## Installation
+The floating button appears on every Desk page for logged-in users.
 
-```bash
-cd $PATH_TO_YOUR_BENCH
-bench get-app $URL_OF_THIS_REPO --branch develop
-bench --site <site-name> install-app easynav
-bench build --app easynav
-bench --site <site-name> migrate
-bench restart
-```
+| Action | Result |
+|---|---|
+| Click the button | Opens the menu and keeps it open |
+| Click the button again, click outside, or press `Esc` | Closes the menu |
+| Hover the button (mouse only) | Opens the menu; it closes when the pointer leaves |
+| `ArrowDown` / `ArrowUp` | Moves through the menu items |
+| Click an item | Opens it, in the same tab or a new tab as configured |
+| Right-click the button (press and hold on touch screens) | Opens your own list of shortcuts |
+| Ctrl/Cmd-click or middle-click an item | Opens it in a new browser tab |
 
-EasyNav ships as content-hashed bundles (`easynav.bundle.js` / `easynav.bundle.css`), so browsers pick up new versions after `bench build` without a manual cache clear. In development you can still hard-reload (Cmd/Ctrl+Shift+R).
+The menu closes automatically when you move to another Desk page. The button is not shown on printed pages, and it sits behind open dialogs.
 
-## Configuration
+The button is hidden only when EasyNav is disabled in the settings. A user with no shortcuts still sees it: the menu then says **No shortcuts yet** and explains how to add some.
+
+## Your shortcuts
+
+Right-click the floating button, or press and hold it on a touch screen. There is no separate edit button; the floating button's tooltip is the reminder. This opens **My Shortcuts**, your own list. Add rows to the table and save; the menu updates straight away.
+
+- The list belongs to you. Other users cannot see or change it, and you cannot see theirs.
+- You can keep up to **30** items.
+- The fields of each row are described under [Navigation items](#navigation-items).
+
+## Site-wide settings
 
 Open **EasyNav Settings** (`/desk/easynav-settings`, System Manager only).
 
@@ -33,130 +44,75 @@ Open **EasyNav Settings** (`/desk/easynav-settings`, System Manager only).
 | Field | Purpose |
 |---|---|
 | Enable EasyNav | Turns the button on or off for everyone |
-| Button Label | Tooltip / accessible name of the button |
+| Button Label | Tooltip / accessible name of the button (defaults to `EasyNav`) |
 | Button Icon | Icon of the floating button (defaults to `menu`) |
 | Position | Bottom Right (default), Bottom Left, Top Right, Top Left |
-| Navigation Items | The menu entries (below) |
 
-### Navigation items
+These options apply to everyone. Saved changes show up immediately for the person who saved them. Other users see them the next time they load Desk.
+
+System Managers can also open **EasyNav User Navigation** (`/desk/easynav-user-navigation`) to view or fix any user's list. They can add a list for a user who does not have one yet: click **Add**, pick the user and fill in the items. Each user has at most one list.
+
+Other users see only their own row there, and **Add** simply opens their own list.
+
+## Navigation items
 
 | Field | Notes |
 |---|---|
-| Enabled | Disabled rows are never shown and are not validated, so you can keep drafts |
+| Enabled | Disabled rows are never shown and may be left incomplete, so you can keep drafts |
 | Label | Text shown in the menu |
 | Icon | Optional icon name (letters, digits, `_`, `-`). Falls back to a default per type |
-| Type | `DocType`, `Page`, `Report` or `URL` |
-| Target | DocType name, Page name, Report name, or URL |
+| Type | `DocType`, `Page`, `Report`, `Dashboard` or `URL` |
+| Link To | Shown for `DocType`, `Page`, `Report` and `Dashboard`: pick the record of that type to open. Only records you are allowed to open are suggested |
+| DocType View | Shown for `DocType` only: `List`, `Report Builder`, `Dashboard`, `Tree`, `New`, `Calendar`, `Kanban` or `Image`. Blank opens the default view |
+| Kanban Board | Shown when DocType View is `Kanban`: optional board to open |
+| URL | Shown for `URL` only: the address to open |
 | Open in New Tab | Opens in a new browser tab |
-| Order | Lower first. Items with no order follow in row order |
+| Order | Lower first. Items with no order (blank or `0`) follow in row order |
 
-Settings are validated on save:
+Where each type takes the user:
 
-- Enabled rows need a label and a target.
-- DocType, Page and Report targets must exist. Child-table DocTypes are rejected.
+| Type | Opens |
+|---|---|
+| DocType | The chosen DocType View (the list view when blank), or the form for Single DocTypes |
+| Page | The Desk page |
+| Report | The report view (Query/Script reports and Report Builder reports) |
+| Dashboard | The dashboard view |
+| URL | The URL, either an external site or a path on this site |
+
+### Validation
+
+A list is checked on save, and the row with the problem is named in the error:
+
+- Enabled rows need a label, plus a Link To (or a URL for `URL` rows).
+- The DocType, Page, Report or Dashboard in Link To must exist. Child-table DocTypes are rejected.
+- The Tree view needs a tree DocType, and a Kanban Board must belong to the selected DocType.
 - URLs must be `http(s)://...` or a path starting with a single `/`.
 - Icon names must be a plain name; Order cannot be negative.
+- A list can hold at most 30 items.
 
-## How it works
+If a target is deleted or renamed after the list was saved, that item is left out of the menu and the rest keep working.
 
-```text
-EasyNav Settings --> build_navigation(user) --> frappe.boot.easynav --> easynav.js --> floating UI
-                       (filter + resolve)       (no extra request)
-```
+## Permissions
 
-| Piece | Location |
+EasyNav is not a permission system. It only hides menu items the current user cannot open, and Frappe still enforces access at the destination.
+
+| Type | Shown to a user when |
 |---|---|
-| Settings (Single) and Item (child table) | `easynav/easynav/doctype/easynav_settings`, `easynav_item` |
-| Validation (shared by save and API) | `easynav/easynav/validation.py` |
-| API `easynav.api.navigation.get_navigation` | `easynav/api/navigation.py` |
-| Boot hook (`extend_bootinfo`) | `easynav/boot.py` |
-| Global assets (`app_include_js/css`) | `easynav/public/js/easynav.bundle.js`, `easynav/public/scss/easynav.bundle.scss` |
+| DocType | They have read permission on the DocType (create permission for the `New` view, report permission for `Report Builder`) |
+| Page | Their roles are allowed to open the Page |
+| Report | Their roles are allowed to open the Report and they have report permission on its DocType |
+| Dashboard | They have read permission on the Dashboard |
+| URL | Always |
 
-### API
+- Only System Managers can view or change EasyNav Settings.
+- A user can only read and change their own shortcuts. System Managers can view, add, change and delete any user's list, and those edits are recorded in the document history.
+- If someone else adds an item to your list that you are not allowed to open, it is not shown to you.
+- Guests never see the button.
+- Links using `javascript:`, `data:` and similar schemes are blocked.
 
-`easynav.api.navigation.get_navigation` (logged-in users only) returns:
+## Upgrading from the shared menu
 
-```json
-{
-  "enabled": true,
-  "position": "bottom-right",
-  "button": {"label": "EasyNav", "icon": "menu"},
-  "items": [
-    {"label": "Users", "icon": null, "type": "DocType", "target": "User",
-     "route": ["List", "User"], "path": "/app/user", "open_in_new_tab": false},
-    {"label": "Site", "type": "URL", "target": "https://example.com",
-     "url": "https://example.com", "open_in_new_tab": true}
-  ]
-}
-```
-
-Routes are resolved on the server:
-
-| Type | `route` |
-|---|---|
-| DocType | `["List", doctype]`, or `["Form", doctype]` for Single DocTypes |
-| Page | `[page]` |
-| Report | `["query-report", name]`, or `["List", ref_doctype, "Report", name]` for Report Builder reports |
-| URL | no route; `url` is used |
-
-The same payload is placed in `frappe.boot.easynav` on page load. The browser only calls the API again (`easynav.refresh()`) after EasyNav Settings is saved.
-
-### Frontend
-
-- One root element, `#easynav-root`, mounted on `body` once and never duplicated.
-- **Click** opens and pins the menu; a second click, an outside click, `Esc` or a Desk route change closes it. **Hover** also opens it on mouse devices.
-- Keyboard: `ArrowUp`/`ArrowDown` move through items, `Esc` closes and returns focus to the button.
-- Navigation is handled per type: Desk routes use `frappe.set_route`; URLs are re-validated in the browser. `javascript:`, `data:` and similar schemes are blocked. Labels are rendered as text, never HTML.
-- Sits below Bootstrap modals (z-index 1030) and is hidden when printing.
-- Responsive: compact button on tablets, safe-area aware and larger touch targets on phones.
-
-## Security
-
-- EasyNav is not a permission system. The API only returns items the current user can open (DocType read permission, Page roles, Report roles plus report permission on its DocType) and Frappe still enforces access at the destination.
-- EasyNav Settings is readable by System Manager only. The API reads it internally and returns just the filtered menu.
-- The API is not available to Guest.
-- URLs are validated on save, in the API and in the browser.
-- See `easynav/specs/EasyNav_Security_Test_Report.md`.
-
-## Development and testing
-
-```bash
-bench --site <site-name> set-config allow_tests true   # once
-bench --site <site-name> run-tests --app easynav
-```
-
-The suite (`IntegrationTestCase`) covers settings validation, the API (ordering, routes, filtering, invalid data) and permissions for restricted, sales and system-manager users.
-
-After changing JS/SCSS run `bench build --app easynav` and reload the browser.
-
-Specifications live in `easynav/specs/`.
-
-## Roadmap
-
-Not in the MVP: role-based and user-specific navigation, groups and nested menus, search, favorites, recent pages, keyboard shortcuts, drag-and-drop builder.
-
-## Contributing
-
-This app uses `pre-commit` for code formatting and linting. Please [install pre-commit](https://pre-commit.com/#installation) and enable it for this repository:
-
-```bash
-cd apps/easynav
-pre-commit install
-```
-
-Pre-commit is configured to use the following tools for checking and formatting your code:
-
-- ruff
-- eslint
-- prettier
-- pyupgrade
-## CI
-
-This app can use GitHub Actions for CI. The following workflows are configured:
-
-- CI: Installs this app and runs unit tests on every push to `develop` branch.
-- Linters: Runs [Frappe Semgrep Rules](https://github.com/frappe/semgrep-rules) and [pip-audit](https://pypi.org/project/pip-audit/) on every pull request.
-
+Earlier versions had one menu for everyone, configured in EasyNav Settings. That shared list is **not carried over**: `bench migrate` deletes it, and every user starts with an empty menu. Note down the old items before upgrading if users will want to re-create them.
 
 ## License
 
