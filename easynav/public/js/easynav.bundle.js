@@ -5,7 +5,6 @@
 
 	const ROOT_ID = "easynav-root";
 	const DEFAULT_ICON = "menu";
-	const EDIT_ICON = "pencil";
 	const USER_NAVIGATION = "EasyNav User Navigation";
 	const TYPE_ICONS = {
 		DocType: "list",
@@ -15,6 +14,8 @@
 		URL: "external-link",
 	};
 	const HOVER_CLOSE_DELAY = 150;
+	const LONG_PRESS_DELAY = 550;
+	const HOVER_QUERY = "(hover: hover) and (pointer: fine)";
 	const POSITIONS = ["bottom-right", "bottom-left", "top-right", "top-left"];
 
 	const easynav = {
@@ -24,6 +25,9 @@
 		button: null,
 		menu: null,
 		_hover_timer: null,
+		_press_timer: null,
+		_long_pressed: false,
+		_editor_opened_at: 0,
 		_pinned: false, // opened by click: stays open until outside click / Esc / second click
 
 		// Configuration is delivered in frappe.boot (see easynav/boot.py).
@@ -76,6 +80,10 @@
 				? config.position
 				: "bottom-right";
 			const label = (config.button && config.button.label) || __("EasyNav");
+			// the editor has no visible control of its own, so the tooltip is where it is advertised
+			const hint = this.has_hover()
+				? __("Right-click to edit your shortcuts")
+				: __("Press and hold to edit your shortcuts");
 
 			const $root = $("<div>", {
 				id: ROOT_ID,
@@ -87,7 +95,7 @@
 				"aria-haspopup": "true",
 				"aria-expanded": "false",
 				"aria-label": label,
-				title: label,
+				title: `${label} · ${hint}`,
 			}).append(this.get_icon_html(config.button && config.button.icon));
 
 			const $menu = this.build_menu(config.items || []);
@@ -125,31 +133,21 @@
 				$menu.append($item);
 			});
 
-			if (items.length) {
-				$menu.append($("<div>", { class: "easynav-divider", role: "separator" }));
-			} else {
-				$menu.append($("<div>", { class: "easynav-empty" }).text(__("No shortcuts yet")));
+			if (!items.length) {
+				$menu.append(
+					$("<div>", { class: "easynav-empty" }).text(
+						this.has_hover()
+							? __("No shortcuts yet. Right-click the button to add some.")
+							: __("No shortcuts yet. Press and hold the button to add some.")
+					)
+				);
 			}
-			$menu.append(this.build_edit_item(items.length));
 
 			return $menu;
 		},
 
-		// Every user owns their shortcuts; this entry opens their EasyNav User Navigation.
-		build_edit_item(has_items) {
-			return $("<button>", {
-				type: "button",
-				class: "easynav-item easynav-item--action",
-				role: "menuitem",
-				tabindex: "-1",
-			}).append(
-				$("<span>", { class: "easynav-item-icon" }).append(
-					this.get_icon_html(EDIT_ICON, "sm")
-				),
-				$("<span>", { class: "easynav-item-label" }).text(
-					has_items ? __("Edit shortcuts") : __("Add shortcuts")
-				)
-			);
+		has_hover() {
+			return window.matchMedia(HOVER_QUERY).matches;
 		},
 
 		// Real href keeps middle-click / copy-link working; plain clicks are routed in on_item_click.
@@ -159,11 +157,6 @@
 		},
 
 		on_item_click(e) {
-			if (e.currentTarget.classList.contains("easynav-item--action")) {
-				this.close();
-				return this.customize();
-			}
-
 			const item = $(e.currentTarget).data("easynav-item");
 			this.close();
 
@@ -174,8 +167,15 @@
 			this.navigate(item);
 		},
 
+		// Every user owns their shortcuts. There is no visible control for this: the editor opens on
+		// right-click (or the keyboard's context-menu key) and on a long press on touch screens.
 		// The document is created on first use; the server only ever returns the session user's own.
 		customize() {
+			// a long press can also fire `contextmenu` on some devices: open once
+			if (Date.now() - this._editor_opened_at < 1000) return;
+			this._editor_opened_at = Date.now();
+
+			this.close();
 			return frappe
 				.call({ method: "easynav.api.navigation.get_user_navigation" })
 				.then((r) => {
@@ -240,10 +240,31 @@
 		},
 
 		bind_events($root, $button) {
-			$button.on("click", () => this.toggle());
+			$button.on("click", () => {
+				// the tap that ends a long press must not also toggle the menu
+				if (this._long_pressed) {
+					this._long_pressed = false;
+					return;
+				}
+				this.toggle();
+			});
+
+			$button.on("contextmenu", (e) => {
+				e.preventDefault();
+				this.customize();
+			});
+			$button.on("touchstart", () => {
+				this._long_pressed = false;
+				clearTimeout(this._press_timer);
+				this._press_timer = setTimeout(() => {
+					this._long_pressed = true;
+					this.customize();
+				}, LONG_PRESS_DELAY);
+			});
+			$button.on("touchend touchmove touchcancel", () => clearTimeout(this._press_timer));
 
 			// Hover is an enhancement for mouse users only; click/tap always works.
-			if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+			if (this.has_hover()) {
 				$root.on("mouseenter", () => {
 					clearTimeout(this._hover_timer);
 					this.open();

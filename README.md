@@ -20,16 +20,16 @@ The floating button appears on every Desk page for logged-in users.
 | Hover the button (mouse only) | Opens the menu; it closes when the pointer leaves |
 | `ArrowDown` / `ArrowUp` | Moves through the menu items |
 | Click an item | Opens it, in the same tab or a new tab as configured |
-| Click **Edit shortcuts** (last entry) | Opens your own list of shortcuts |
+| Right-click the button (press and hold on touch screens) | Opens your own list of shortcuts |
 | Ctrl/Cmd-click or middle-click an item | Opens it in a new browser tab |
 
 The menu closes automatically when you move to another Desk page. The button is not shown on printed pages, and it sits behind open dialogs.
 
-The button is hidden only when EasyNav is disabled in the settings. A user with no shortcuts still sees it: the menu then says **No shortcuts yet** and offers **Add shortcuts**.
+The button is hidden only when EasyNav is disabled in the settings. A user with no shortcuts still sees it: the menu then says **No shortcuts yet** and explains how to add some.
 
 ## Your shortcuts
 
-Open the menu and click **Edit shortcuts** (or **Add shortcuts** the first time). This opens **My Shortcuts**, your own list. Add rows to the table and save; the menu updates straight away.
+Right-click the floating button, or press and hold it on a touch screen. There is no separate edit button; the floating button's tooltip is the reminder. This opens **My Shortcuts**, your own list. Add rows to the table and save; the menu updates straight away.
 
 - The list belongs to you. Other users cannot see or change it, and you cannot see theirs.
 - You can keep up to **30** items.

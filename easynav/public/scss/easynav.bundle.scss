@@ -48,6 +48,9 @@
 	box-shadow: var(--shadow-md);
 	cursor: pointer;
 	pointer-events: auto;
+	/* a long press opens the editor: keep the OS from selecting text or showing its own callout */
+	-webkit-touch-callout: none;
+	user-select: none;
 	transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -156,28 +159,10 @@
 	box-shadow: inset 0 0 0 2px var(--btn-primary, var(--primary));
 }
 
-/* "Edit shortcuts" is a button, not a link: reset it to look like the other items */
-.easynav-item--action {
-	width: 100%;
-	border: 0;
-	background: none;
-	font: inherit;
-	text-align: start;
-	color: var(--text-muted);
-	cursor: pointer;
-}
-
-.easynav-divider {
-	height: 1px;
-	margin: var(--margin-xs, 4px) 0;
-	background-color: var(--border-color);
-}
-
 .easynav-empty {
 	padding: var(--padding-sm, 8px) var(--padding-md, 12px);
 	color: var(--text-muted);
 	font-size: var(--text-sm, 13px);
-	white-space: nowrap;
 }
 
 .easynav-item-icon {
