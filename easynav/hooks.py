@@ -172,25 +172,24 @@ extend_bootinfo = ["easynav.boot.extend_bootinfo"]
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+permission_query_conditions = {
+	"EasyNav User Navigation": "easynav.easynav.doctype.easynav_user_navigation.easynav_user_navigation.get_permission_query_conditions",
+}
+
+has_permission = {
+	"EasyNav User Navigation": "easynav.easynav.doctype.easynav_user_navigation.easynav_user_navigation.has_permission",
+}
 
 # Document Events
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"User": {
+		"on_trash": "easynav.easynav.doctype.easynav_user_navigation.easynav_user_navigation.delete_user_navigation",
+		"after_rename": "easynav.easynav.doctype.easynav_user_navigation.easynav_user_navigation.rename_user_navigation",
+	}
+}
 
 # Scheduled Tasks
 # ---------------
