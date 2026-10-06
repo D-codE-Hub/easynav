@@ -11,12 +11,12 @@
  ],
  "fields": [
   {
+   "default": "__user",
    "fieldname": "user",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "User",
    "options": "User",
-   "read_only": 1,
    "reqd": 1,
    "set_only_once": 1,
    "unique": 1
@@ -33,10 +33,9 @@
    "options": "EasyNav Item"
   }
  ],
- "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-06 17:00:00.000000",
+ "modified": "2026-10-06 19:00:00.000000",
  "modified_by": "Administrator",
  "module": "EasyNav",
  "name": "EasyNav User Navigation",
@@ -44,11 +43,13 @@
  "owner": "Administrator",
  "permissions": [
   {
+   "create": 1,
    "read": 1,
    "role": "Desk User",
    "write": 1
   },
   {
+   "create": 1,
    "delete": 1,
    "email": 1,
    "export": 1,

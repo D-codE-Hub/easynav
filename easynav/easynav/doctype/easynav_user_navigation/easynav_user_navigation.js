@@ -16,9 +16,24 @@ frappe.ui.form.on("EasyNav User Navigation", {
 		});
 	},
 
+	onload(frm) {
+		// "Add" for an ordinary user can only mean their own list, and they have just one:
+		// open it (it is created on first use) instead of showing an empty form
+		if (frm.is_new() && !frappe.user.has_role("System Manager")) {
+			frappe.call({ method: "easynav.api.navigation.get_user_navigation" }).then((r) => {
+				if (r.message) frappe.set_route("Form", frm.doctype, r.message);
+			});
+		}
+	},
+
 	refresh(frm) {
 		const own = frm.doc.user === frappe.session.user;
-		frm.toggle_display("user", !own);
+		const is_support_user = frappe.user.has_role("System Manager");
+
+		// support users pick whose list they are adding; everyone else only ever sees their own
+		frm.toggle_display("user", is_support_user && (frm.is_new() || !own));
+		if (frm.is_new()) return;
+
 		if (own) {
 			frm.page.set_title(__("My Shortcuts"));
 		} else {

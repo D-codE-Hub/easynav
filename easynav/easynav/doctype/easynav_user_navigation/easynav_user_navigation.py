@@ -27,6 +27,7 @@ class EasyNavUserNavigation(Document):
 	# end: auto-generated types
 
 	def validate(self):
+		# a user may only create and edit their own list; support users may do so for anyone.
 		# does not rely on the permission hooks: holds even for code that saves with ignore_permissions
 		if self.user != frappe.session.user and not _is_support_user(frappe.session.user):
 			frappe.throw(_("You can only edit your own shortcuts"), frappe.PermissionError)

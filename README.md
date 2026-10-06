@@ -50,7 +50,9 @@ Open **EasyNav Settings** (`/desk/easynav-settings`, System Manager only).
 
 These options apply to everyone. Saved changes show up immediately for the person who saved them. Other users see them the next time they load Desk.
 
-System Managers can also open **EasyNav User Navigation** (`/desk/easynav-user-navigation`) to view or fix any user's existing list. A list is created the first time its user opens the editor, so there is nothing to fix before that.
+System Managers can also open **EasyNav User Navigation** (`/desk/easynav-user-navigation`) to view or fix any user's list. They can add a list for a user who does not have one yet: click **Add**, pick the user and fill in the items. Each user has at most one list.
+
+Other users see only their own row there, and **Add** simply opens their own list.
 
 ## Navigation items
 
@@ -103,7 +105,7 @@ EasyNav is not a permission system. It only hides menu items the current user ca
 | URL | Always |
 
 - Only System Managers can view or change EasyNav Settings.
-- A user can only read and change their own shortcuts. System Managers can view, change and delete any user's list, and those edits are recorded in the document history.
+- A user can only read and change their own shortcuts. System Managers can view, add, change and delete any user's list, and those edits are recorded in the document history.
 - If someone else adds an item to your list that you are not allowed to open, it is not shown to you.
 - Guests never see the button.
 - Links using `javascript:`, `data:` and similar schemes are blocked.

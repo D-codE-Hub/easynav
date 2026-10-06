@@ -179,7 +179,7 @@ def get_user_navigation() -> str:
 	if not user or user == "Guest":
 		frappe.throw(_("Log in to edit your shortcuts"), frappe.PermissionError)
 
-	# users have no create permission: this is the only way a document comes to exist
+	# created on the user's behalf, so opening the editor never depends on their create permission
 	if not frappe.db.exists(USER_NAVIGATION, user):
 		frappe.get_doc({"doctype": USER_NAVIGATION, "user": user}).insert(ignore_permissions=True)
 

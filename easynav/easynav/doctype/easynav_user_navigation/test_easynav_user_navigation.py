@@ -84,9 +84,30 @@ class TestEasyNavUserNavigation(IntegrationTestCase):
 		frappe.set_user(self.user_a)
 		self.assertEqual(frappe.get_list(DOCTYPE, pluck="name"), [self.user_a])
 
-	def test_user_cannot_create_or_delete(self):
+	def test_user_can_add_only_their_own_list(self):
+		frappe.delete_doc(DOCTYPE, self.user_a, ignore_permissions=True)
+
 		frappe.set_user(self.user_a)
-		self.assertFalse(frappe.has_permission(DOCTYPE, "create"))
+		# `user` defaults to the session user, as on the "Add" form
+		doc = frappe.new_doc(DOCTYPE)
+		self.assertEqual(doc.user, self.user_a)
+		doc.append("items", _url_item("A1"))
+		doc.insert()
+		self.assertEqual(doc.name, self.user_a)
+
+		# one list per user
+		with self.assertRaises(frappe.DuplicateEntryError):
+			frappe.get_doc({"doctype": DOCTYPE, "user": self.user_a}).insert()
+
+		frappe.set_user("Administrator")
+		frappe.delete_doc(DOCTYPE, self.manager, ignore_permissions=True, ignore_missing=True)
+		frappe.set_user(self.user_a)
+		with self.assertRaises(frappe.PermissionError):
+			frappe.get_doc({"doctype": DOCTYPE, "user": self.manager}).insert()
+		self.assertFalse(frappe.db.exists(DOCTYPE, self.manager))
+
+	def test_user_cannot_delete_own_list(self):
+		frappe.set_user(self.user_a)
 		self.assertFalse(frappe.has_permission(DOCTYPE, "delete", doc=frappe.get_doc(DOCTYPE, self.user_a)))
 
 	def test_ownership_guard_holds_without_permission_checks(self):
@@ -104,7 +125,7 @@ class TestEasyNavUserNavigation(IntegrationTestCase):
 		frappe.delete_doc(DOCTYPE, self.manager, ignore_permissions=True, ignore_missing=True)
 		doc = frappe.get_doc(DOCTYPE, self.user_a)
 		doc.user = self.manager
-		# `user` is read only: Frappe restores the stored value instead of saving the change
+		# the document is named after `user`: Frappe restores the stored value instead of saving it
 		doc.save()
 		self.assertEqual(doc.reload().user, self.user_a)
 		self.assertFalse(frappe.db.exists(DOCTYPE, self.manager))
@@ -121,16 +142,20 @@ class TestEasyNavUserNavigation(IntegrationTestCase):
 		doc.save()
 		self.assertEqual([row.label for row in doc.reload().items], ["Fixed"])
 		self.assertTrue(frappe.has_permission(DOCTYPE, "delete", doc=doc))
-		self.assertFalse(frappe.has_permission(DOCTYPE, "create"))
 
-	def test_system_manager_cannot_create_a_list_for_someone_else(self):
+	def test_system_manager_can_add_a_list_for_someone_else(self):
 		frappe.set_user("Administrator")
 		frappe.delete_doc(DOCTYPE, self.user_a, ignore_permissions=True)
 
 		frappe.set_user(self.manager)
-		with self.assertRaises(frappe.PermissionError):
-			frappe.get_doc({"doctype": DOCTYPE, "user": self.user_a}).insert()
-		self.assertFalse(frappe.db.exists(DOCTYPE, self.user_a))
+		frappe.get_doc({"doctype": DOCTYPE, "user": self.user_a, "items": [_url_item("Starter")]}).insert()
+
+		frappe.set_user(self.user_a)
+		self.assertEqual([i["label"] for i in build_navigation()["items"]], ["Starter"])
+		# it is the user's own list from then on
+		doc = frappe.get_doc(DOCTYPE, self.user_a)
+		doc.append("items", _url_item("A2"))
+		doc.save()
 
 	def test_fixing_a_list_does_not_change_the_fixers_menu(self):
 		make_navigation(self.manager, [_url_item("M1")])

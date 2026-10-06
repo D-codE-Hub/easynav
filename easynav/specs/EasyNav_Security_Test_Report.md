@@ -58,11 +58,11 @@ In V2 each user owns one `EasyNav User Navigation` document. The MVP results abo
 | A's menu contains A's items and none of B's | Pass |
 | A cannot read, write or delete B's document | Pass |
 | A's list view returns only A's row | Pass |
-| A cannot create a document, and cannot delete their own | Pass |
+| A can add only their own document (one per user), and cannot delete it | Pass |
 | Ownership guard holds even when code saves with `ignore_permissions` | Pass |
 | A document cannot be reassigned to another user | Pass |
 | System Manager can list, read, edit and delete any user's existing document | Pass |
-| System Manager cannot create a document for another user | Pass |
+| System Manager can add a document for another user; it is that user's own from then on | Pass |
 | A System Manager's edit changes the owner's menu, not the System Manager's | Pass |
 | Saving clears only the owner's cached boot info | Pass |
 | `get_user_navigation` creates the session user's document once, and only theirs | Pass |
@@ -79,7 +79,8 @@ In V2 each user owns one `EasyNav User Navigation` document. The MVP results abo
 
 ## Notes
 
-- `user` is a read-only field. An attempt to change it is not rejected with an error: Frappe restores the stored value on save. The outcome (no reassignment) is what the test asserts.
+- The document is named after `user`. An attempt to change it on an existing document is not rejected with an error: Frappe restores the stored value on save. The outcome (no reassignment) is what the test asserts.
+- **Changed after the first V2 run:** the DocType now has an **Add** option. `Desk User` and `System Manager` have create permission; the ownership guard still limits an ordinary user to a document for themselves. The suite is now 52 tests.
 - No whitelisted method takes a user id. The menu and the editor entry point are always keyed on `frappe.session.user`.
 - A System Manager editing another user's list is offered targets by the System Manager's own permissions. This does not leak access: each item is permission-checked for the owner when their menu is built.
 - Frappe's standard link search lists every DocType to every user. EasyNav's search is narrower than that, so it exposes nothing new.

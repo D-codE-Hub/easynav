@@ -304,6 +304,7 @@ Decided by the product owner on 2026-10-06:
 | Existing global items | Not migrated. Deleted on upgrade; everyone starts empty. |
 | New users | Start with an empty menu and the "Edit shortcuts" entry. No starter set. |
 | Admin access | System Managers can view and fix any user's existing list. |
+| Adding lists (changed 2026-10-06, after Phase 6) | The DocType has an **Add** option. A user can add only their own list; System Managers can add one for any user. This replaces the `in_create` / no-create-permission rule in sections 3.1, 3.2 and 3.5. |
 | Item limit | 30 items per user, fixed (not configurable). |
 | DocType name | `EasyNav User Navigation`. |
 
