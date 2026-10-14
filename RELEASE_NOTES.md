@@ -1,6 +1,23 @@
 # EasyNav Release Notes
 
-Releases are listed newest first. Neither has a git tag yet.
+Releases are listed newest first. None has a git tag yet.
+
+---
+
+## 2.0.1 — Documentation and DocType suggestions
+
+Branch `feat/user-navigation-items`, 2026-10-14.
+
+No migration or asset build is needed. Restart the bench (or its web workers) so the search change takes effect.
+
+### Changed
+
+- **DocType suggestions no longer filter by module.** When picking a DocType in Link To, the suggestions no longer leave out DocTypes from disabled modules. They are still limited to DocTypes the user can read, and child tables are still excluded.
+
+### Documentation
+
+- The README is rewritten as a user guide for per-user shortcuts: a step-by-step walkthrough of building a menu, the per-user lists, a full EasyNav Settings section, support access for System Managers and a troubleshooting table.
+- New screenshots from a running site replace the old ones, which still showed the shared menu and the Navigation Items table in EasyNav Settings.
 
 ---
 
@@ -41,8 +58,7 @@ EasyNav changes from one shared menu, maintained by an administrator, to a perso
 
 ### Known limitations
 
-- The floating menu and the edit form were not checked in a browser during development. The server side is covered by 52 automated tests and a 46-step run over the HTTP API.
-- The README screenshot of EasyNav Settings still shows the old Navigation Items table.
+- The server side is covered by 52 automated tests and a 46-step run over the HTTP API. In a browser, only the ordinary-user flow has been checked so far: the empty menu, opening and saving My Shortcuts, Link To suggestions, validation errors and the per-user menus shown in the README screenshots. EasyNav Settings has been opened in a browser, but saving it there has not been tried, and editing another user's list has not been checked in a browser.
 
 ---
 
