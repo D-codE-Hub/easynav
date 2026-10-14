@@ -1,5 +1,4 @@
 import frappe
-from frappe.app_state import get_disabled_modules
 from frappe.desk.search import validate_and_sanitize_search_inputs
 from frappe.permissions import get_doctypes_with_read
 
@@ -8,8 +7,6 @@ def _search_doctypes(txt: str) -> list[list[str]]:
 	filters = [["istable", "=", 0]]
 	if txt:
 		filters.append(["name", "like", f"%{txt}%"])
-	if disabled_modules := get_disabled_modules():
-		filters.append(["module", "not in", list(disabled_modules)])
 	if frappe.session.user != "Administrator":
 		# narrows the query to the user's roles; has_permission below stays the authority
 		filters.append(["name", "in", get_doctypes_with_read() or [""]])
